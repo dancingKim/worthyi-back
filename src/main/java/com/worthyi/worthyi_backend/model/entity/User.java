@@ -25,7 +25,6 @@ public class User {
     @Column(name = "user_uuid", updatable = false, nullable = false)
     private UUID userUuid;
 
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id", unique = true, insertable = false, updatable = false)
     private Long userId;
 
