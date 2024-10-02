@@ -1,5 +1,6 @@
 package com.worthyi.worthyi_backend.service;
 
+import java.util.Optional;
 import com.worthyi.worthyi_backend.model.entity.User;
 import com.worthyi.worthyi_backend.repository.UserRepository;
 import com.worthyi.worthyi_backend.security.OAuth2UserInfo;
@@ -36,13 +37,12 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         OAuth2UserInfo oAuth2UserInfo = OAuth2UserInfo.of(registrationId, attributes);
 
         // 사용자 이메일로 데이터베이스에서 사용자 조회
-        User user = userRepository.findByEid(oAuth2UserInfo.email())
-                .orElseGet(() -> {
-                    // 사용자 없을 시 신규 생성 후 저장
-                    User newUser = oAuth2UserInfo.toEntity();
-                    return userRepository.save(newUser);
-                });
-
+        Optional<User> userOptional = userRepository.findByEid(oAuth2UserInfo.email());
+        User user = userOptional.orElseGet(() -> {
+            // 사용자 없을 시 신규 생성 후 저장
+            User newUser = oAuth2UserInfo.toEntity();
+            return userRepository.save(newUser);
+        });
         // PrincipalDetails 객체 반환 (OAuth2User 구현체)
         return new PrincipalDetails(user, attributes, "email");
     }
