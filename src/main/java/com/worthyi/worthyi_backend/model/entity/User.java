@@ -31,7 +31,7 @@ public class User {
     @Column(name = "eid", nullable = false)
     private String eid;
 
-    @Column(name = "pwd", nullable = false)
+    @Column(name = "pwd", nullable = true)
     private String pwd;
 
     @Column(name = "access_token")
