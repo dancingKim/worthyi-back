@@ -2,9 +2,11 @@ package com.worthyi.worthyi_backend.security;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
@@ -16,31 +18,39 @@ import jakarta.servlet.http.HttpServletRequest;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Service;
 
 
 @Slf4j
-@Component
-@RequiredArgsConstructor
 public class JwtTokenProvider {
 
-    @Value("${JWT_SECRET_KEY}")
-    private String secretKey;
-
+    private final String secretKey;
     private SecretKey key;
+
     private final long tokenValidTime = 30 * 60 * 1000L; // 토큰 유효 시간: 30분
 
-    @PostConstruct
-    protected void init() {
+    @Getter
+    private final long refreshTokenValidTime = 30 * 60 * 1000L;
+
+    private final StringRedisTemplate redisTemplate;
+
+    public JwtTokenProvider(String secretKey, StringRedisTemplate redisTemplate) {
+        this.secretKey = secretKey;
+        this.redisTemplate = redisTemplate;
+        init(); // key 초기화
+    }
+
+    private void init() {
         // SecretKey 초기화
         this.key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
         log.info("SecretKey initialized.");
     }
-
     // JWT 토큰 생성 메소드
     public String createToken(Authentication authentication) {
         log.debug("Creating JWT token for authentication: {}", authentication);
@@ -51,12 +61,20 @@ public class JwtTokenProvider {
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
 
+        return createToken(email, authentication.getAuthorities());
+    }
+
+    public String createToken(String email, Collection<? extends GrantedAuthority> roles) {
+
+        String authorities = roles.stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.joining(","));
+
         // JWT Claims 설정
         Claims claims = Jwts.claims().setSubject(email); // 이메일을 subject로 사용
         claims.put("roles", authorities); // 권한 정보를 추가
         Date now = new Date();
 
-        // JWT 토큰 빌드 및 반환
         String token = Jwts.builder()
                 .setClaims(claims) // 사용자 정보 설정
                 .setIssuedAt(now) // 토큰 발행 시간
@@ -64,10 +82,26 @@ public class JwtTokenProvider {
                 .signWith(key, SignatureAlgorithm.HS256) // 서명 알고리즘과 키 설정
                 .compact();
 
-        log.info("JWT token created: {}", token);
         return token;
     }
 
+    public String createRefreshToken(Authentication authentication) {
+        String email = authentication.getName();
+        return createRefreshToken(email);
+    }
+
+    public String createRefreshToken(String email) {
+        Date now = new Date();
+
+        Claims claims = Jwts.claims().setSubject(email);
+
+        return Jwts.builder()
+                .setClaims(claims)
+                .setIssuedAt(now)
+                .setExpiration(new Date(now.getTime() + refreshTokenValidTime))
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+    }
     // JWT 토큰에서 인증 정보 조회
     public Authentication getAuthentication(String token) {
         log.debug("Getting authentication from token.");
@@ -88,6 +122,22 @@ public class JwtTokenProvider {
         return authentication;
     }
 
+    public boolean isTokenExpired(String token) {
+        try {
+            Date expiration = Jwts.parserBuilder()
+                    .setSigningKey(key)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody()
+                    .getExpiration();
+
+            return expiration.before(new Date());
+        } catch (Exception e){
+            return true;
+        }
+
+    }
+
     // Claims에서 권한 정보 추출
     private List<SimpleGrantedAuthority> getAuthorities(Claims claims) {
         log.debug("Extracting authorities from claims.");
@@ -104,6 +154,11 @@ public class JwtTokenProvider {
 
         log.debug("Authorities extracted: {}", authorities);
         return authorities;
+    }
+
+    public String getEmailFromToken(String token) {
+        Claims claims = parseClaims(token);
+        return claims.getSubject();
     }
 
     // JWT 토큰에서 Claims 추출
@@ -161,5 +216,10 @@ public class JwtTokenProvider {
             log.error("Illegal argument token: {}", e.getMessage());
         }
         return false;
+    }
+
+    public long getExpiration(String token) {
+        Claims claims = parseClaims(token);
+        return claims.getExpiration().getTime();
     }
 }

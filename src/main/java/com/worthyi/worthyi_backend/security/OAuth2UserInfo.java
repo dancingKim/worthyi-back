@@ -42,6 +42,7 @@ public class OAuth2UserInfo {
     public User toEntity() {
         return User.builder()
                 .eid(email)
+                .authorityNm("ROLE_USER")
                 .build();
     }
 
