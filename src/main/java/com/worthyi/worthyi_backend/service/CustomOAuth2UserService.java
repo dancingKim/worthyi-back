@@ -1,8 +1,14 @@
 package com.worthyi.worthyi_backend.service;
 
+import java.util.Collections;
 import java.util.Optional;
+
+import com.worthyi.worthyi_backend.model.entity.Role;
 import com.worthyi.worthyi_backend.model.entity.User;
+import com.worthyi.worthyi_backend.model.entity.UserRole;
+import com.worthyi.worthyi_backend.repository.RoleRepository;
 import com.worthyi.worthyi_backend.repository.UserRepository;
+import com.worthyi.worthyi_backend.repository.UserRoleRepository;
 import com.worthyi.worthyi_backend.security.OAuth2UserInfo;
 import com.worthyi.worthyi_backend.security.PrincipalDetails;
 import jakarta.transaction.Transactional;
@@ -21,6 +27,8 @@ import java.util.Map;
 @Service
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
+    private final UserRoleRepository userRoleRepository;
 
     @Transactional
     @Override
@@ -44,15 +52,35 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         log.info("OAuth2UserInfo: {}", oAuth2UserInfo);
 
         // 사용자 이메일로 데이터베이스에서 사용자 조회
-        Optional<User> userOptional = userRepository.findByEid(oAuth2UserInfo.email());
+
+        Optional<User> userOptional = userRepository.findByEidWithRoles(oAuth2UserInfo.email());
+
         User user = userOptional.orElseGet(() -> {
-            log.info("User not found, creating new user with email: {}", oAuth2UserInfo.email());
             // 사용자 없을 시 신규 생성 후 저장
             User newUser = oAuth2UserInfo.toEntity();
-            User savedUser = userRepository.save(newUser);
+            userRepository.save(newUser);
 
-            return savedUser;
+            // 역할 설정
+            Role userRole = roleRepository.findByAuthorityName("ROLE_USER")
+                    .orElseGet(() -> roleRepository.save(
+                            Role.builder()
+                                    .authorityName("ROLE_USER")
+                                    .build()
+                    ));
+
+            UserRole userRoleEntity = UserRole.builder()
+                    .user(newUser)
+                    .role(userRole)
+                    .build();
+
+            userRoleRepository.save(userRoleEntity);
+
+            // 새로 생성한 사용자의 userRoles 설정
+            newUser.setUserRoles(Collections.singletonList(userRoleEntity));
+
+            return newUser;
         });
+
         log.info("User loaded: {}", user);
         // PrincipalDetails 객체 반환 (OAuth2User 구현체)
         return new PrincipalDetails(user, attributes, "email");

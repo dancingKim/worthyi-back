@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class PrincipalDetails implements OAuth2User, UserDetails {
 
@@ -46,7 +47,9 @@ public class PrincipalDetails implements OAuth2User, UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         // 사용자의 권한 반환
-        return Collections.singletonList(new SimpleGrantedAuthority(user.getAuthorityNm()));
+        return user.getUserRoles().stream()
+                .map(userRole -> new SimpleGrantedAuthority(userRole.getRole().getAuthorityName()))
+                .collect(Collectors.toList());
     }
 
     @Override

@@ -3,6 +3,7 @@ package com.worthyi.worthyi_backend.config;
 import com.worthyi.worthyi_backend.security.JwtAuthenticationFilter;
 import com.worthyi.worthyi_backend.security.JwtTokenProvider;
 import com.worthyi.worthyi_backend.security.OAuth2AuthenticationSuccessHandler;
+import com.worthyi.worthyi_backend.security.RedirectUrlCookieFilter;
 import com.worthyi.worthyi_backend.service.CustomOAuth2UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,10 +14,12 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.*;
+import org.springframework.web.filter.CorsFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -24,6 +27,7 @@ import org.springframework.web.cors.*;
 public class SecurityConfig {
 
     private final CustomOAuth2UserService oAuth2UserService;
+    private final RedirectUrlCookieFilter redirectUrlCookieFilter;
 
     @Value("${JWT_SECRET_KEY}")
     private String secretKey;
@@ -38,14 +42,20 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeRequests(auth -> auth
-                        .requestMatchers("/", "/login", "/oauth2/**", "/css/**", "/js/**", "/images/**").permitAll()
+                        .requestMatchers("/", "/login","/auth/**", "/oauth2/**", "/css/**", "/js/**", "/images/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
                         .userInfoEndpoint(userInfo -> userInfo.userService(oAuth2UserService))
                         .successHandler(oAuth2AuthenticationSuccessHandler)
-                )
+                );
+
+        http
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
+        http
+                .addFilterBefore(redirectUrlCookieFilter, OAuth2AuthorizationRequestRedirectFilter.class);
+        http.addFilterAfter(jwtAuthenticationFilter, CorsFilter.class);
 
         return http.build();
     }
@@ -75,7 +85,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         // 필요한 CORS 설정을 추가하세요.
-        configuration.addAllowedOrigin("*");
+        configuration.addAllowedOrigin("http://localhost:3000");
         configuration.addAllowedMethod("*");
         configuration.addAllowedHeader("*");
         configuration.setAllowCredentials(true);
