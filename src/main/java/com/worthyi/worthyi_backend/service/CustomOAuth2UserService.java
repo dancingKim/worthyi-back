@@ -61,6 +61,11 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             userRepository.save(newUser);
 
             // 역할 설정
+            // 이 경우 enum으로 관리하는 게 더 좋을 수도.
+            /*
+            * TODO: 권한 enum 만들기
+            * */
+
             Role userRole = roleRepository.findByAuthorityName("ROLE_USER")
                     .orElseGet(() -> roleRepository.save(
                             Role.builder()
