@@ -1,14 +1,12 @@
 package com.worthyi.worthyi_backend.model.entity;
 
-import jakarta.persistence.*;
 import lombok.*;
-
-import java.util.List;
+import jakarta.persistence.*;
+import java.util.Set;
 
 @Entity
 @Table(name = "role")
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -19,9 +17,11 @@ public class Role {
     @Column(name = "role_id")
     private Long roleId;
 
-    @Column(name = "authority_name")
+    @Column(name = "authority_name", nullable = false, length = 50)
     private String authorityName;
 
-    @OneToMany(mappedBy = "role")
-    private List<UserRole> userRoles;
+    // Relationships
+
+    @OneToMany(mappedBy = "role", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<UserRole> userRoles;
 }

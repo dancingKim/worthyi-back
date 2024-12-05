@@ -6,28 +6,31 @@ import java.time.LocalDateTime;
 import java.util.Set;
 
 @Entity
-@Table(name = "avatar")
+@Table(name = "village_stat")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Avatar {
+public class VillageStat {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "avatar_id")
-    private Long avatarId;
+    @Column(name = "village_stat_id")
+    private Long villageStatId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "village_template_id", nullable = false)
     @ToString.Exclude
-    private User user;
+    private VillageTemplate villageTemplate;
 
-    @Column(name = "name", nullable = false, length = 50)
+    @Column(name = "name", nullable = false, length = 100)
     private String name;
 
-    @Column(name = "appearance")
-    private String appearance;
+    @Column(name = "description")
+    private String description;
+
+    @Column(name = "level_up_experience", nullable = false)
+    private Integer levelUpExperience;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -37,9 +40,6 @@ public class Avatar {
 
     // Relationships
 
-    @OneToMany(mappedBy = "avatar", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "villageStat", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<AvatarVillageStat> avatarVillageStats;
-
-    @OneToMany(mappedBy = "avatar", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<ItemInstance> itemInstances;
 }

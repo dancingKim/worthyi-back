@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>로그인 페이지</title>
+</head>
+<body>
+<h1>로그인</h1>
+<p>
+    <a th:href="@{/oauth2/authorization/google}">Google 계정으로 로그인</a>
+</p>
+<p th:if="${param.error}">
+    로그인 실패. 다시 시도해 주세요.
+</p>
+</body>
+</html>

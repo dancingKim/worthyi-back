@@ -1,12 +1,11 @@
 package com.worthyi.worthyi_backend.model.entity;
 
-import jakarta.persistence.*;
 import lombok.*;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "user_role")
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -17,11 +16,13 @@ public class UserRole {
     @Column(name = "user_role_id")
     private Long userRoleId;
 
-    @ManyToOne
     @JoinColumn(name = "role_id", nullable = false)
+    @ToString.Exclude
+    @ManyToOne
     private Role role;
 
+    @JoinColumn(name = "user_id", nullable = false)
+    @ToString.Exclude
     @ManyToOne
-    @JoinColumn(name = "user_uuid", nullable = false)
     private User user;
 }

@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>대시보드</title>
+</head>
+<body>
+<h1>대시보드</h1>
+<p th:text="'안녕하세요, ' + ${user.username} + '님!'"></p>
+<p>이메일: <span th:text="${user.username}"></span></p>
+<p><a th:href="@{/logout}">로그아웃</a></p>
+</body>
+</html>
