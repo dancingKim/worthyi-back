@@ -2,18 +2,16 @@ package com.worthyi.worthyi_backend.security;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Component;
-import org.springframework.security.core.GrantedAuthority;
 import jakarta.annotation.PostConstruct;
-import jakarta.servlet.http.HttpServletRequest;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
@@ -24,8 +22,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.security.core.Authentication;
-import org.springframework.stereotype.Service;
-
 
 @Slf4j
 public class JwtTokenProvider {
@@ -51,6 +47,7 @@ public class JwtTokenProvider {
         this.key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
         log.info("SecretKey initialized.");
     }
+
     // JWT 토큰 생성 메소드
     public String createToken(Authentication authentication) {
         log.debug("Creating JWT token for authentication: {}", authentication);
@@ -102,6 +99,7 @@ public class JwtTokenProvider {
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
+
     // JWT 토큰에서 인증 정보 조회
     public Authentication getAuthentication(String token) {
         log.debug("Getting authentication from token.");

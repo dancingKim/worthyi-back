@@ -1,14 +1,13 @@
 package com.worthyi.worthyi_backend.model.entity;
 
-import jakarta.persistence.*;
 import lombok.*;
-
-import java.util.List;
+import jakarta.persistence.*;
+import java.time.LocalDateTime;
+import java.util.Set;
 
 @Entity
 @Table(name = "village_template")
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -16,28 +15,40 @@ public class VillageTemplate {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "village_template_id")
-    private Long villageTemplateId;
+    @Column(name = "template_id")
+    private Long templateId;
 
-    @Column(name = "village_subject")
-    private String villageSubject;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "creator_user_id", nullable = false)
+    @ToString.Exclude
+    private User creatorUser;
 
-    @Column(name = "village_name", nullable = false)
-    private String villageName;
+    @Column(name = "name", nullable = false, length = 100)
+    private String name;
 
-    @ManyToOne
-    @JoinColumn(name = "template_creator_user_uuid", nullable = false)
-    private User templateCreator;
+    @Column(name = "description")
+    private String description;
 
-    @OneToMany(mappedBy = "villageTemplate")
-    private List<Village> villages;
+    @Column(name = "background_image")
+    private String backgroundImage;
 
-    @OneToMany(mappedBy = "villageTemplate")
-    private List<StatTemplate> statTemplates;
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 
-    @OneToMany(mappedBy = "villageTemplate")
-    private List<VillagePlace> villagePlaces;
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "villageTemplate")
-    private List<Item> items;
+    // Relationships
+
+    @OneToMany(mappedBy = "villageTemplate", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<PositionSlot> positionSlots;
+
+    @OneToMany(mappedBy = "villageTemplate", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<PlaceTemplate> placeTemplates;
+
+    @OneToMany(mappedBy = "villageTemplate", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<VillageStat> villageStats;
+
+    @OneToMany(mappedBy = "villageTemplate", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<ItemTemplate> itemTemplates;
 }

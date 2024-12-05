@@ -33,26 +33,26 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (token != null) {
 
-            String isLougout = redisTemplate.opsForValue().get("blacklist:"+token);
+            String isLougout = redisTemplate.opsForValue().get("blacklist:" + token);
 
             if (isLougout != null) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 response.getWriter().write("Invalid JWT token");
                 return;
-            } else if(jwtTokenProvider.validateToken(token)) {
+            } else if (jwtTokenProvider.validateToken(token)) {
                 log.info("Valid token: {}", token);
 
                 Authentication authentication = jwtTokenProvider.getAuthentication(token);
                 log.debug("Extracted authentication: {}", authentication);
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-            } else if (jwtTokenProvider.isTokenExpired(token)){
+            } else if (jwtTokenProvider.isTokenExpired(token)) {
                 log.warn("JWT token is expired");
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 response.getWriter().write("Invalid JWT token");
                 return;
             }
-        } else{
+        } else {
             log.warn("JWT token is missing");
         }
 

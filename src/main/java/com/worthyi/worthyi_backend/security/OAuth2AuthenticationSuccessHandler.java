@@ -20,8 +20,7 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
 
     private final JwtTokenProvider jwtTokenProvider;
     private final StringRedisTemplate redisTemplate;
-    private static final String  LOCAL_REDIRECT_URL = "http://localhost:3000";
-
+    private static final String LOCAL_REDIRECT_URL = "myapp://";
 
     public OAuth2AuthenticationSuccessHandler(JwtTokenProvider jwtTokenProvider, StringRedisTemplate redisTemplate) {
         this.jwtTokenProvider = jwtTokenProvider;
@@ -38,8 +37,8 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
         String jwtToken = jwtTokenProvider.createToken(authentication);
         log.info("jwtToken = {}", jwtToken);
 
-        String email = authentication.getName();
-        String refreshToken = jwtTokenProvider.createRefreshToken(authentication);
+        String email = jwtTokenProvider.getEmailFromToken(jwtToken);
+        String refreshToken = jwtTokenProvider.createRefreshToken(email);
 
         // Redis에 Refresh Token 저장
         redisTemplate.opsForValue().set("refresh:" + email, refreshToken,
@@ -61,7 +60,9 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
         // 토큰을 응답 헤더에 추가
         response.addHeader("Refresh-Token", refreshToken);
 
+        log.info("redirectUri = {}", redirectUri.orElseGet(() -> LOCAL_REDIRECT_URL));
+
         // 인증 성공 후 리디렉션할 URL 설정
-        response.sendRedirect(redirectUri.orElseGet(() -> LOCAL_REDIRECT_URL)+"/sociallogin?token="+jwtToken);
+        response.sendRedirect(redirectUri.orElseGet(() -> LOCAL_REDIRECT_URL) + "/sociallogin?token=" + jwtToken);
     }
 }

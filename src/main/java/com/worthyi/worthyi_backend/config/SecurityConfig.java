@@ -19,7 +19,6 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.*;
-import org.springframework.web.filter.CorsFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -52,10 +51,8 @@ public class SecurityConfig {
 
         http
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-
         http
                 .addFilterBefore(redirectUrlCookieFilter, OAuth2AuthorizationRequestRedirectFilter.class);
-        http.addFilterAfter(jwtAuthenticationFilter, CorsFilter.class);
 
         return http.build();
     }
@@ -84,8 +81,12 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // 필요한 CORS 설정을 추가하세요.
-        configuration.addAllowedOrigin("http://localhost:3000");
+        // React Native 앱에서의 요청을 허용
+        configuration.addAllowedOrigin("http://localhost:3000"); // 웹용
+        configuration.addAllowedOrigin("http://192.168.0.6:8081"); // Metro Bundler를 사용하는 React Native 앱
+        configuration.addAllowedOrigin("http://10.0.2.2:8081"); // Android 에뮬레이터용
+        configuration.addAllowedOriginPattern("*"); // 모든 요청 허용 (배포 환경에서는 주의
+
         configuration.addAllowedMethod("*");
         configuration.addAllowedHeader("*");
         configuration.setAllowCredentials(true);

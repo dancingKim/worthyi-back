@@ -1,12 +1,15 @@
 package com.worthyi.worthyi_backend.security;
 
 import com.worthyi.worthyi_backend.model.entity.User;
-import jakarta.security.auth.message.AuthException;
 import lombok.Builder;
+import lombok.Getter;
+import lombok.ToString;
 
 import java.util.Map;
 
 @Builder
+@Getter
+@ToString
 public class OAuth2UserInfo {
     private String name;
     private String email;
@@ -41,21 +44,9 @@ public class OAuth2UserInfo {
 
     public User toEntity() {
         return User.builder()
-                .eid(email)
-                .authorityNm("ROLE_USER")
+                .username(name)
+                .email(email)
+                .authorities("ROLE_USER")
                 .build();
-    }
-
-    // Getter 메소드
-    public String name() {
-        return name;
-    }
-
-    public String email() {
-        return email;
-    }
-
-    public String profile() {
-        return profile;
     }
 }
