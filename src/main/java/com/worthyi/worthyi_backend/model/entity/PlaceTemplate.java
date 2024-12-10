@@ -49,7 +49,7 @@ public class PlaceTemplate {
     // Relationships
 
     @OneToMany(mappedBy = "placeTemplate", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<ActionTemplate> actionTemplates;
+    private Set<ChildActionTemplate> childActionTemplates;
 
     @OneToMany(mappedBy = "placeTemplate", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<PlaceInstance> placeInstances;

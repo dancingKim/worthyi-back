@@ -48,5 +48,5 @@ public class PlaceInstance {
     // Relationships
 
     @OneToMany(mappedBy = "placeInstance", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<ActionInstance> actionInstances;
+    private Set<ChildActionInstance> childActionInstances;
 }

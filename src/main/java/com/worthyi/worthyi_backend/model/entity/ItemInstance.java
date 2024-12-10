@@ -46,7 +46,4 @@ public class ItemInstance {
     private LocalDateTime updatedAt;
 
     // Relationships
-
-    @OneToMany(mappedBy = "itemInstance", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<ActionResult> actionResults;
 }

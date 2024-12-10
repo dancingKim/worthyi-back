@@ -51,6 +51,4 @@ public class VillageInstance {
     @OneToMany(mappedBy = "villageInstance", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<AvatarInVillage> avatarInVillages;
 
-    @OneToMany(mappedBy = "villageInstance", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<ActionResult> actionResults;
 }
