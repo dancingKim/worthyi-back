@@ -94,7 +94,7 @@ MAX_FD=maximum
 
 warn () {
     echo "$*"
-} >&2
+} >&:2
 
 die () {
     echo
