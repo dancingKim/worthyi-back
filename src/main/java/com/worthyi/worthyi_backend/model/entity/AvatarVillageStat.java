@@ -7,11 +7,12 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "avatar_village_stat",
         uniqueConstraints = @UniqueConstraint(columnNames = {"avatar_id", "village_id", "village_stat_id"}))
-@Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class AvatarVillageStat {
+@Getter
+@Setter
+public class AvatarVillageStat extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

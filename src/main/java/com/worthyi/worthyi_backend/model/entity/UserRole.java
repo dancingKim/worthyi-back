@@ -5,11 +5,12 @@ import jakarta.persistence.*;
 
 @Entity
 @Table(name = "user_role")
-@Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter
+@Setter
 @Builder
-public class UserRole {
+public class UserRole extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -4,10 +4,10 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.Type;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@ToString
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
@@ -15,7 +15,7 @@ import java.util.List;
 @Setter
 @Getter
 @Table(name = "child_action_instance")
-public class ChildActionInstance {
+public class ChildActionInstance extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long childActionInstanceId;
@@ -35,4 +35,10 @@ public class ChildActionInstance {
 
     @OneToMany(mappedBy = "childActionInstance", cascade = CascadeType.ALL)
     private List<AdultActionInstance> adultActionInstances = new ArrayList<>();
+
+    @Column(name = "created_at", nullable = true, updatable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 }

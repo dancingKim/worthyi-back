@@ -7,11 +7,12 @@ import java.util.Set;
 
 @Entity
 @Table(name = "item_instance")
-@Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class ItemInstance {
+@Getter
+@Setter
+public class ItemInstance extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

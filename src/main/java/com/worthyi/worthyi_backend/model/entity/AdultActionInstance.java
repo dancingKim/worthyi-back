@@ -3,6 +3,8 @@ package com.worthyi.worthyi_backend.model.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -10,7 +12,7 @@ import lombok.*;
 @Setter
 @Entity
 @Table(name = "adult_action_instance")
-public class AdultActionInstance {
+public class AdultActionInstance extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long adultActionInstanceId;

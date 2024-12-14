@@ -7,11 +7,12 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "social_account",
         uniqueConstraints = @UniqueConstraint(columnNames = {"provider", "provider_user_id"}))
-@Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class SocialAccount {
+@Getter
+@Setter
+public class SocialAccount extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

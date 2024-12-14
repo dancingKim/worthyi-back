@@ -6,11 +6,12 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "avatar_in_village")
-@Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class AvatarInVillage {
+@Getter
+@Setter
+public class AvatarInVillage extends BaseEntity {
 
     @EmbeddedId
     private AvatarInVillageId id;
