@@ -43,3 +43,6 @@ build
 *.yaml
 *.yml
 *.properties
+
+# redis
+*.rdb

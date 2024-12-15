@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 
@@ -36,12 +37,12 @@ public class AuthService {
         String email = jwtTokenProvider.getEmailFromToken(refreshToken);
         String redisRefreshToken = redisTemplate.opsForValue().get("refresh:" + email);
 
+        Authentication authentication = jwtTokenProvider.getAuthentication(refreshToken);
+
         if (redisRefreshToken != null && redisRefreshToken.equals(refreshToken)) {
             List<GrantedAuthority> authorities = userService.getUserAuthoritiesByEmail(email);
-            String newAccessToken = jwtTokenProvider.createToken(email, authorities);
-            String newRefreshToken = jwtTokenProvider.createRefreshToken(email);
-
-            // 새로운 Refresh Token을 Redis에 저장
+            String newAccessToken = jwtTokenProvider.createToken(authentication, authorities);
+            String newRefreshToken = jwtTokenProvider.createRefreshToken(authentication);            // 새로운 Refresh Token을 Redis에 저장
             redisTemplate.opsForValue().set(
                     "refresh:" + email,
                     newRefreshToken,

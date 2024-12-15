@@ -6,7 +6,9 @@ import com.worthyi.worthyi_backend.model.entity.ChildActionInstance;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class ActionDto {
@@ -38,13 +40,22 @@ public class ActionDto {
     public static class Response {
         private Long childActionId;
         private String childActionContent;
-        private List<AdultActionInstance> adultActions;
+        private List<AdultActionDto.Response> adultActions;
 
         public static Response fromEntity(ChildActionInstance entity) {
+            List<AdultActionDto.Response> adultActionResponses = null;
+            if (entity.getAdultActionInstances() != null) {
+                adultActionResponses = entity.getAdultActionInstances().stream()
+                        .map(AdultActionDto.Response::fromEntity)
+                        .collect(Collectors.toList());
+            } else {
+                adultActionResponses = new ArrayList<>(); // 빈 리스트로 초기화
+            }
+
             return Response.builder()
                     .childActionId(entity.getChildActionInstanceId())
                     .childActionContent(entity.getData())
-                    .adultActions(entity.getAdultActionInstances())
+                    .adultActions(adultActionResponses)
                     .build();
         }
     }

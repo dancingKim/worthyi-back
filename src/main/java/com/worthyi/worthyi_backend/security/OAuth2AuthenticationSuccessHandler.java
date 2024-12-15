@@ -31,14 +31,12 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException {
 
-        log.info("OAuth2AuthenticationSuccessHandler Starts");
-
         // JWT 토큰 생성
         String jwtToken = jwtTokenProvider.createToken(authentication);
-        log.info("jwtToken = {}", jwtToken);
 
         String email = jwtTokenProvider.getEmailFromToken(jwtToken);
-        String refreshToken = jwtTokenProvider.createRefreshToken(email);
+
+         String refreshToken = jwtTokenProvider.createRefreshToken(authentication);
 
         // Redis에 Refresh Token 저장
         redisTemplate.opsForValue().set("refresh:" + email, refreshToken,
