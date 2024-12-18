@@ -13,6 +13,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.time.DayOfWeek;
+import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -94,9 +97,70 @@ public class ActionService {
         });
 
 
-
         return instances.stream()
                 .map(ActionDto.Response::fromEntity)
                 .collect(Collectors.toList());
+    }
+
+    public ActionDto.ActionLogResponse getActionLogs(PrincipalDetails principal, LocalDate date) {
+        log.info("getActionLogs 시작 - userId: {}, 요청 날짜: {}", principal.getUser().getUserId(), date);
+        
+        Long userId = principal.getUser().getUserId();
+        Long avatarId = avatarRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found")).getAvatarId();
+        log.info("조회된 avatarId: {}", avatarId);
+
+        // 오늘의 시작과 끝
+        LocalDateTime todayStart = date.atStartOfDay();
+        LocalDateTime todayEnd = date.plusDays(1).atStartOfDay();
+        log.info("오늘 기간 - 시작: {}, 종료: {}", todayStart, todayEnd);
+
+        // 이번 년도의 시작과 끝
+        LocalDateTime yearStart = date.withDayOfYear(1).atStartOfDay();
+        LocalDateTime yearEnd = date.withDayOfYear(date.lengthOfYear()).plusDays(1).atStartOfDay();
+        log.info("연간 기간 - 시작: {}, 종료: {}", yearStart, yearEnd);
+
+        // 이번 주의 시작과 끝
+        LocalDateTime weekStart = date.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).atStartOfDay();
+        LocalDateTime weekEnd = date.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY)).plusDays(1).atStartOfDay();
+        log.info("주간 기간 - 시작: {}, 종료: {}", weekStart, weekEnd);
+
+        // 이번 달의 시작과 끝
+        LocalDateTime monthStart = date.withDayOfMonth(1).atStartOfDay();
+        LocalDateTime monthEnd = date.withDayOfMonth(date.lengthOfMonth()).plusDays(1).atStartOfDay();
+        log.info("월간 기간 - 시작: {}, 종료: {}", monthStart, monthEnd);
+
+        // 오늘의 감사 목록 조회
+        List<ChildActionInstance> todayActions = childActionInstanceRepository.findAllByDateAndAvatarId(
+                avatarId, todayStart, todayEnd);
+        log.info("오늘의 감사 기록 수: {}", todayActions.size());
+        
+        List<ActionDto.DailyLog> dailyLogs = new ArrayList<>();
+        dailyLogs.add(ActionDto.DailyLog.builder()
+                .date(date)
+                .actions(todayActions.stream()
+                        .map(ActionDto.Response::fromEntity)
+                        .collect(Collectors.toList()))
+                .build());
+
+        // 각 기간별 감사 일수 조회
+        int weeklyCount = childActionInstanceRepository.countDistinctDatesByAvatarIdAndDateBetween(
+                avatarId, weekStart, weekEnd);
+        int monthlyCount = childActionInstanceRepository.countDistinctDatesByAvatarIdAndDateBetween(
+                avatarId, monthStart, monthEnd); 
+        int yearlyCount = childActionInstanceRepository.countDistinctDatesByAvatarIdAndDateBetween(
+                avatarId, yearStart, yearEnd);
+        
+        log.info("집계 결과 - 주간: {}, 월간: {}, 연간: {}", weeklyCount, monthlyCount, yearlyCount);
+
+        ActionDto.ActionLogResponse response = ActionDto.ActionLogResponse.builder()
+                .dailyLogs(dailyLogs)
+                .weeklyCount(weeklyCount)
+                .monthlyCount(monthlyCount)
+                .yearlyCount(yearlyCount)
+                .build();
+                
+        log.info("getActionLogs 종료");
+        return response;
     }
 }
