@@ -1,5 +1,6 @@
 package com.worthyi.worthyi_backend.config;
 
+import com.worthyi.worthyi_backend.security.CustomAuthenticationEntryPoint;
 import com.worthyi.worthyi_backend.security.JwtAuthenticationFilter;
 import com.worthyi.worthyi_backend.security.JwtTokenProvider;
 import com.worthyi.worthyi_backend.security.OAuth2AuthenticationSuccessHandler;
@@ -40,13 +41,16 @@ public class SecurityConfig {
                 .httpBasic(httpBasic -> httpBasic.disable())
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeRequests(auth -> auth
+                .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/login","/auth/**", "/oauth2/**", "/css/**", "/js/**", "/images/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
                         .userInfoEndpoint(userInfo -> userInfo.userService(oAuth2UserService))
                         .successHandler(oAuth2AuthenticationSuccessHandler)
+                )
+                .exceptionHandling(ex -> ex
+                    .authenticationEntryPoint(new CustomAuthenticationEntryPoint())
                 );
 
         http
