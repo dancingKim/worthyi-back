@@ -8,6 +8,7 @@ import com.worthyi.worthyi_backend.service.ActionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -24,22 +25,11 @@ public class ActionController {
     private final ActionService actionService;
 
     @PostMapping("/child")
-    public ApiResponse<ActionDto.Response> createChildAction(
-            @AuthenticationPrincipal PrincipalDetails principal,
-            @RequestBody ActionDto.Request actionDto) {
-        // principal: 인증된 사용자의 식별자(JWT에서 추출된 userId 등)
-        log.info("principal: {}", principal);
-        log.info("childActionContent: {}", actionDto.getChildActionContent());
-        log.info("userId: {}", principal.getUser().getUserId());
-
-        /*
-        PlaceTemplate에 대한 정보를 넘겨준다.
-        ChildActionInstance에 대한 정보를 넘겨 준다.
-
-         */
-
-        ActionDto.Response actionResponse = actionService.saveChildAction(actionDto, principal);
-        return ApiResponse.success(actionResponse);
+    public ResponseEntity<ApiResponse<ActionDto.Response>> saveChildAction(
+            @RequestBody ActionDto.Request request,
+            @AuthenticationPrincipal PrincipalDetails principal) {
+        ApiResponse<ActionDto.Response> response = actionService.saveChildAction(request, principal);
+        return ResponseEntity.status(response.getCode()).body(response);
     }
 
     @PostMapping("/adult")
