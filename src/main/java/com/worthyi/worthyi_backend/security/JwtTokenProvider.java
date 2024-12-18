@@ -53,28 +53,30 @@ public class JwtTokenProvider {
     }
 
     public String createToken(Authentication authentication, Collection<? extends GrantedAuthority> roles) {
+        log.info("토큰 생성 시작: 사용자={}", authentication.getName());
 
-        PrincipalDetails principalDetails =
-                (PrincipalDetails) authentication.getPrincipal();
+        PrincipalDetails principalDetails = (PrincipalDetails) authentication.getPrincipal();
+        log.debug("Principal 정보: {}", principalDetails);
 
         String email = authentication.getName();
         String authorities = roles.stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
+        log.debug("권한 정보: {}", authorities);
 
-        // JWT Claims 설정
-        Claims claims = Jwts.claims().setSubject(email); // 이메일을 subject로 사용
-        claims.put("roles", authorities); // 권한 정보를 추가
+        Claims claims = Jwts.claims().setSubject(email);
+        claims.put("roles", authorities);
         claims.put("userId", principalDetails.getUser().getUserId());
+        
         Date now = new Date();
-
         String token = Jwts.builder()
-                .setClaims(claims) // 사용자 정보 설정
-                .setIssuedAt(now) // 토큰 발행 시간
-                .setExpiration(new Date(now.getTime() + tokenValidTime)) // 토큰 만료 시간
-                .signWith(key, SignatureAlgorithm.HS256) // 서명 알고리즘과 키 설정
+                .setClaims(claims)
+                .setIssuedAt(now)
+                .setExpiration(new Date(now.getTime() + tokenValidTime))
+                .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
 
+        log.info("토큰 생성 완료: {}", token);
         return token;
     }
 
@@ -205,26 +207,24 @@ public class JwtTokenProvider {
 
     // 토큰의 유효성 및 만료일자 확인
     public boolean validateToken(String token) {
-        log.debug("Validating token.");
-
+        log.info("토큰 검증 시작");
         try {
-            // 토큰 파싱 및 검증
             Jwts.parserBuilder()
                     .setSigningKey(key)
                     .build()
                     .parseClaimsJws(token);
-            log.debug("Token is valid.");
+            log.info("토큰 검증 성공");
             return true;
         } catch (ExpiredJwtException e) {
-            log.warn("Token has expired: {}", e.getMessage());
+            log.error("만료된 토큰: {}", e.getMessage());
         } catch (UnsupportedJwtException e) {
-            log.error("Unsupported JWT token: {}", e.getMessage());
+            log.error("지원되지 않는 토큰: {}", e.getMessage());
         } catch (MalformedJwtException e) {
-            log.error("Malformed JWT token: {}", e.getMessage());
-        } catch (SignatureException e) {
-            log.error("Invalid JWT signature: {}", e.getMessage());
+            log.error("잘못된 형식의 토큰: {}", e.getMessage());
+        } catch (SecurityException e) {
+            log.error("유효하지 않은 서명: {}", e.getMessage());
         } catch (IllegalArgumentException e) {
-            log.error("Illegal argument token: {}", e.getMessage());
+            log.error("잘못된 토큰: {}", e.getMessage());
         }
         return false;
     }

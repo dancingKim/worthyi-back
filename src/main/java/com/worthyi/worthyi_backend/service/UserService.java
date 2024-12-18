@@ -60,7 +60,7 @@ public class UserService {
     public UserDto.Response getUserInfo(Long userId) {
         log.info("getUserInfo - Attempting to fetch user information for userId: {}", userId);
         
-        User user = userRepository.findByUserId(userId)
+        User user = userRepository.findByUserIdWithAvatars(userId)
                 .orElseThrow(() -> {
                     log.error("getUserInfo - User not found for userId: {}", userId);
                     return new IllegalArgumentException(ApiStatus.USER_NOT_FOUND.getMessage());
@@ -68,12 +68,7 @@ public class UserService {
         
         log.info("getUserInfo - Successfully found user: id={}, email={}", user.getUserId(), user.getEmail());
         
-        UserDto.Response response = UserDto.Response.builder()
-                .userId(user.getUserId())
-                .email(user.getEmail())
-                .name(user.getUsername())
-                .build();
-                
+        UserDto.Response response = UserDto.Response.from(user);
         log.info("getUserInfo - Successfully created response DTO for user: {}", response);
         
         return response;

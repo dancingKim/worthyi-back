@@ -30,15 +30,19 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException {
-
-        // JWT 토큰 생성
+        log.info("OAuth2 인증 성공 처리 시작");
+        
+        log.debug("JWT 토큰 생성 시작");
         String jwtToken = jwtTokenProvider.createToken(authentication);
+        log.debug("생성된 JWT 토큰: {}", jwtToken);
 
         String email = jwtTokenProvider.getEmailFromToken(jwtToken);
+        log.debug("토큰에서 추출한 이메일: {}", email);
 
-         String refreshToken = jwtTokenProvider.createRefreshToken(authentication);
+        String refreshToken = jwtTokenProvider.createRefreshToken(authentication);
+        log.debug("Refresh 토큰 생성: {}", refreshToken);
 
-        // Redis에 Refresh Token 저장
+        log.info("Redis에 Refresh 토큰 저장");
         redisTemplate.opsForValue().set("refresh:" + email, refreshToken,
                 jwtTokenProvider.getRefreshTokenValidTime(), TimeUnit.MILLISECONDS);
 
@@ -54,6 +58,9 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
         refreshTokenCookie.setMaxAge((int) (jwtTokenProvider.getRefreshTokenValidTime() / 1000));
         response.addCookie(refreshTokenCookie);
 
+        
+        
+
 
         // 토큰을 응답 헤더에 추가
         response.addHeader("Refresh-Token", refreshToken);
@@ -62,5 +69,7 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
 
         // 인증 성공 후 리디렉션할 URL 설정
         response.sendRedirect(redirectUri.orElseGet(() -> LOCAL_REDIRECT_URL) + "/sociallogin?token=" + jwtToken);
+        
+        log.info("OAuth2 인증 성공 처리 완료");
     }
 }
