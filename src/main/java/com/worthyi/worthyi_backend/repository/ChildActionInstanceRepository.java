@@ -21,4 +21,11 @@ public interface ChildActionInstanceRepository extends JpaRepository<ChildAction
                                                        @Param("startOfDay") LocalDateTime startOfDay,
                                                        @Param("endOfDay") LocalDateTime endOfDay
                                                        );
+
+    @Query("SELECT COUNT(DISTINCT DATE(c.createdAt)) FROM ChildActionInstance c WHERE c.avatarId = :avatarId AND c.createdAt BETWEEN :startDate AND :endDate")
+    int countDistinctDatesByAvatarIdAndDateBetween(
+        @Param("avatarId") Long avatarId,
+        @Param("startDate") LocalDateTime startDate,
+        @Param("endDate") LocalDateTime endDate
+    );
 }
