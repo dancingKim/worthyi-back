@@ -33,26 +33,22 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     @Transactional
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-
-        log.info("OAuth2UserRequest received: {}", userRequest);
-        // 기본 구현체를 통해 사용자 정보 가져오기
+        log.info("OAuth2 사용자 정보 로딩 시작");
+        
         OAuth2User oAuth2User = super.loadUser(userRequest);
-        log.info("OAuth2User loaded: {}", oAuth2User.getAttributes());
+        log.debug("기본 OAuth2User 로드: {}", oAuth2User.getAttributes());
 
-        // OAuth2 공급자 ID (예: google, kakao)
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
-        log.info("OAuth2 registrationId: {}", registrationId);
+        log.debug("OAuth2 제공자: {}", registrationId);
 
-        // 사용자 정보 맵 가져오기
         Map<String, Object> attributes = oAuth2User.getAttributes();
-        log.info("OAuth2 attributes: {}", attributes);
+        log.debug("OAuth2 속성: {}", attributes);
 
-        // 사용자 정보를 OAuth2UserInfo 객체로 변환
         OAuth2UserInfo oAuth2UserInfo = OAuth2UserInfo.of(registrationId, attributes);
-        log.info("OAuth2UserInfo: {}", oAuth2UserInfo);
+        log.debug("변환된 OAuth2UserInfo: {}", oAuth2UserInfo);
 
-        // 사용자 이메일로 데이터베이스에서 사용자 조회
         Optional<User> userOptional = userRepository.findByEmailWithRoles(oAuth2UserInfo.getEmail());
+        log.debug("기존 사용자 조회 결과: {}", userOptional.isPresent() ? "존재" : "미존재");
 
         User user = userOptional.orElseGet(() -> {
             // 사용자 없을 시 신규 생성 후 저장
