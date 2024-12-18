@@ -1,5 +1,7 @@
 package com.worthyi.worthyi_backend.service;
 
+import com.worthyi.worthyi_backend.common.ApiStatus;
+import com.worthyi.worthyi_backend.model.dto.UserDto;
 import com.worthyi.worthyi_backend.model.entity.Role;
 import com.worthyi.worthyi_backend.model.entity.User;
 import com.worthyi.worthyi_backend.model.entity.UserRole;
@@ -7,15 +9,18 @@ import com.worthyi.worthyi_backend.repository.RoleRepository;
 import com.worthyi.worthyi_backend.repository.UserRepository;
 import com.worthyi.worthyi_backend.repository.UserRoleRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -49,5 +54,28 @@ public class UserService {
         } else {
             throw new UsernameNotFoundException("User not found with email: " + email);
         }
+    }
+
+    @Transactional(readOnly = true)
+    public UserDto.Response getUserInfo(Long userId) {
+        log.info("getUserInfo - Attempting to fetch user information for userId: {}", userId);
+        
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> {
+                    log.error("getUserInfo - User not found for userId: {}", userId);
+                    return new IllegalArgumentException(ApiStatus.USER_NOT_FOUND.getMessage());
+                });
+        
+        log.info("getUserInfo - Successfully found user: id={}, email={}", user.getUserId(), user.getEmail());
+        
+        UserDto.Response response = UserDto.Response.builder()
+                .userId(user.getUserId())
+                .email(user.getEmail())
+                .name(user.getUsername())
+                .build();
+                
+        log.info("getUserInfo - Successfully created response DTO for user: {}", response);
+        
+        return response;
     }
 }
