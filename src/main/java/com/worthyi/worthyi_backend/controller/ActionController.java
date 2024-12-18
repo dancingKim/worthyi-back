@@ -10,7 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -73,5 +72,17 @@ public class ActionController {
 
         List<ActionDto.Response> responses = actionService.getChildActionsByDate(userId, date);
         return ApiResponse.success(responses);
+    }
+
+
+    @GetMapping("/logs")
+    public ApiResponse<ActionDto.ActionLogResponse> getLogs(
+            @AuthenticationPrincipal PrincipalDetails principal,
+            @RequestParam("date") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date
+    ) {
+        log.info("getLogs: {}", date);
+        log.info("userId: {}", principal.getUser().getUserId());
+        ActionDto.ActionLogResponse result = actionService.getActionLogs(principal, date);
+        return ApiResponse.success(result);
     }
 }
