@@ -7,11 +7,12 @@ import java.util.Set;
 
 @Entity
 @Table(name = "place_template")
-@Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class PlaceTemplate {
+@Getter
+@Setter
+public class PlaceTemplate extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -49,7 +50,7 @@ public class PlaceTemplate {
     // Relationships
 
     @OneToMany(mappedBy = "placeTemplate", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<ActionTemplate> actionTemplates;
+    private Set<ChildActionTemplate> childActionTemplates;
 
     @OneToMany(mappedBy = "placeTemplate", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<PlaceInstance> placeInstances;

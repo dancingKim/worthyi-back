@@ -5,13 +5,14 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.Set;
 
-@Entity
 @Table(name = "avatar")
-@Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class Avatar {
+@Getter
+@Setter
+@Entity
+public class Avatar extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

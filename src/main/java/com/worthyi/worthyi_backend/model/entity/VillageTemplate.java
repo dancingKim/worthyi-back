@@ -7,11 +7,12 @@ import java.util.Set;
 
 @Entity
 @Table(name = "village_template")
-@Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class VillageTemplate {
+@Getter
+@Setter
+public class VillageTemplate extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

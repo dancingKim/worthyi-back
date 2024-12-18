@@ -7,11 +7,12 @@ import java.util.Set;
 
 @Entity
 @Table(name = "village_instance")
-@Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class VillageInstance {
+@Getter
+@Setter
+public class VillageInstance extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -51,6 +52,4 @@ public class VillageInstance {
     @OneToMany(mappedBy = "villageInstance", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<AvatarInVillage> avatarInVillages;
 
-    @OneToMany(mappedBy = "villageInstance", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<ActionResult> actionResults;
 }

@@ -1,5 +1,6 @@
 package com.worthyi.worthyi_backend.security;
 
+import com.worthyi.worthyi_backend.model.entity.User;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.HttpServletRequest;
@@ -9,16 +10,12 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Component;
 import jakarta.annotation.PostConstruct;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.springframework.security.core.Authentication;
@@ -52,17 +49,15 @@ public class JwtTokenProvider {
     public String createToken(Authentication authentication) {
         log.debug("Creating JWT token for authentication: {}", authentication);
 
-        String email = authentication.getName(); // Principal의 이름을 이메일로 가정
-        // 사용자 권한 정보를 문자열로 변환
-        String authorities = authentication.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.joining(","));
-
-        return createToken(email, authentication.getAuthorities());
+        return createToken(authentication, authentication.getAuthorities());
     }
 
-    public String createToken(String email, Collection<? extends GrantedAuthority> roles) {
+    public String createToken(Authentication authentication, Collection<? extends GrantedAuthority> roles) {
 
+        PrincipalDetails principalDetails =
+                (PrincipalDetails) authentication.getPrincipal();
+
+        String email = authentication.getName();
         String authorities = roles.stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
@@ -70,6 +65,7 @@ public class JwtTokenProvider {
         // JWT Claims 설정
         Claims claims = Jwts.claims().setSubject(email); // 이메일을 subject로 사용
         claims.put("roles", authorities); // 권한 정보를 추가
+        claims.put("userId", principalDetails.getUser().getUserId());
         Date now = new Date();
 
         String token = Jwts.builder()
@@ -83,8 +79,20 @@ public class JwtTokenProvider {
     }
 
     public String createRefreshToken(Authentication authentication) {
+        PrincipalDetails principalDetails =
+                (PrincipalDetails) authentication.getPrincipal();
+        Date now = new Date();
         String email = authentication.getName();
-        return createRefreshToken(email);
+        Claims claims = Jwts.claims().setSubject(email);
+        claims.put("userId", principalDetails.getUser().getUserId());
+
+        return Jwts.builder()
+                .setClaims(claims)
+                .setIssuedAt(now)
+                .setExpiration(new Date(now.getTime() + refreshTokenValidTime))
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+
     }
 
     public String createRefreshToken(String email) {
@@ -100,22 +108,27 @@ public class JwtTokenProvider {
                 .compact();
     }
 
-    // JWT 토큰에서 인증 정보 조회
-    public Authentication getAuthentication(String token) {
-        log.debug("Getting authentication from token.");
+   public Authentication getAuthentication(String token) {
 
         Claims claims = parseClaims(token);
-        log.debug("Parsed claims: {}", claims);
 
         List<SimpleGrantedAuthority> authorities = getAuthorities(claims);
-        log.debug("Extracted authorities: {}", authorities);
 
-        // UserDetails 객체 생성 (비밀번호는 빈 문자열로 설정)
-        User principal = new User(claims.getSubject(), "", authorities);
+//  밑에 부분을 주석 처리한다.
+        //    User principal = new User(claims.getSubject(), "", authorities);
 
-        // 인증 정보 반환
+        Long userId = claims.get("userId", Long.class);
+        String email = claims.getSubject();
+        User user = User.builder().userId(userId).build();
+        PrincipalDetails principal =
+                new PrincipalDetails(user, Map.of(
+                        "email", email,
+                        "userId", userId
+                ), "email");
+// 인증 정보 반환
         Authentication authentication = new UsernamePasswordAuthenticationToken(principal, token, authorities);
         log.debug("Authentication object created: {}", authentication);
+// 이제 PrincipalDetails를 이용하는 코드 시작
 
         return authentication;
     }

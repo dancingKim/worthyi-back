@@ -9,7 +9,7 @@ import java.util.Objects;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class AvatarInVillageId implements Serializable {
+public class AvatarInVillageId implements Serializable{
 
     @Column(name = "avatar_id")
     private Long avatarId;

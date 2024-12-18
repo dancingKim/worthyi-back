@@ -6,11 +6,12 @@ import java.util.Set;
 
 @Entity
 @Table(name = "role")
-@Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class Role {
+@Getter
+@Setter
+public class Role extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
