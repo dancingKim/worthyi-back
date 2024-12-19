@@ -11,7 +11,7 @@
 
          steps:
          - name: Checkout code
-           uses: actions/checkout@v2
+           uses: actions/checkout@v4
 
          - name: Download and install Java 23
            run: |
@@ -44,7 +44,7 @@
              name: app
 
          - name: List downloaded files
-           run: ls -lR app || echo "No files found in app"
+           run: ls -lR /home/runner/work/worthyi-back/worthyi-back || echo "No files found in /home/runner/work/worthyi-back/worthyi-back"
 
          - name: Copy files via SSH
            uses: appleboy/scp-action@v0.1.1
@@ -52,7 +52,7 @@
              host: ${{ secrets.EC2_HOST }}
              username: ${{ secrets.EC2_USER }}
              key: ${{ secrets.EC2_KEY }}
-             source: "app/*.jar"
+             source: "/home/runner/work/worthyi-back/worthyi-back/*.jar"
              target: "/home/ec2-user/"
              debug: true
 
