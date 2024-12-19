@@ -54,6 +54,7 @@
              key: ${{ secrets.EC2_KEY }}
              source: "build/libs/*.jar"
              target: "/home/ec2-user/"
+             debug: true
 
          - name: Execute remote command via SSH
            uses: appleboy/ssh-action@v0.1.1
