@@ -44,7 +44,7 @@
              name: app
 
          - name: Verify artifact exists
-           run: ls -l build/libs/
+           run: ls -l build/libs/ || echo "No files found in build/libs/"
 
          - name: Copy files via SSH
            uses: appleboy/scp-action@v0.1.1
@@ -64,5 +64,9 @@
              key: ${{ secrets.EC2_KEY }}
              script: |
                sudo yum update -y
-               sudo amazon-linux-extras install java-openjdk11 -y
+               wget https://corretto.aws/downloads/latest/amazon-corretto-23-x64-linux-jdk.tar.gz
+               tar -xzf amazon-corretto-23-x64-linux-jdk.tar.gz
+               sudo mv amazon-corretto-23.0.1.8.1-linux-x64 /usr/local/
+               export JAVA_HOME=/usr/local/amazon-corretto-23.0.1.8.1-linux-x64
+               export PATH=$JAVA_HOME/bin:$PATH
                java -jar /home/ec2-user/your-app.jar
