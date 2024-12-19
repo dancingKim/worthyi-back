@@ -1,97 +1,95 @@
 plugins {
-	id 'java'
-	id 'org.springframework.boot' version '3.3.2'
-	id 'io.spring.dependency-management' version '1.1.6'
+    id 'java'
+    id 'org.springframework.boot' version '3.3.2'
+    id 'io.spring.dependency-management' version '1.1.6'
 }
 
 group = 'com.worthyi'
 version = '0.0.1-SNAPSHOT'
 
 java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(23)
-	}
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(23)
+        vendor = JvmVendorSpec.AMAZON
+    }
 }
 
 configurations {
-	compileOnly {
-		extendsFrom annotationProcessor
-	}
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
 }
 
 repositories {
-	mavenCentral()
-	maven { url 'https://repo.spring.io/milestone' }
+    mavenCentral()
+    maven { url 'https://repo.spring.io/milestone' }
 }
 
 ext {
-	set('springAiVersion', "1.0.0-M2")
-	set('springCloudAwsVersion', "3.2.0")
+    set('springAiVersion', "1.0.0-M2")
+    set('springCloudAwsVersion', "3.2.0")
 }
 
 dependencies {
-//	AWS, AWS SecretsManager
-	implementation platform("io.awspring.cloud:spring-cloud-aws-dependencies:${springCloudAwsVersion}")
-	implementation 'io.awspring.cloud:spring-cloud-aws-starter'
-	implementation 'io.awspring.cloud:spring-cloud-aws-starter-secrets-manager'
+    // AWS, AWS SecretsManager
+    implementation platform("io.awspring.cloud:spring-cloud-aws-dependencies:${springCloudAwsVersion}")
+    implementation 'io.awspring.cloud:spring-cloud-aws-starter'
+    implementation 'io.awspring.cloud:spring-cloud-aws-starter-secrets-manager'
 
-//	PostgreSQL
-	implementation 'org.postgresql:postgresql:42.7.4'
+    // PostgreSQL
+    implementation 'org.postgresql:postgresql:42.7.4'
 
-	//redis// https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-data-redis
-	implementation 'org.springframework.boot:spring-boot-starter-data-redis:3.3.4'
+    // Redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis:3.3.4'
 
+    // Spring Boot 데이터 베이스 관련. JDBC, JPA, MyBatis
+    implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+    implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.3'
 
+    // Spring Security
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 
-//	Spring Boot 데이터 베이스 관련. JDBC, JPA, MyBatis
-	implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	implementation 'org.springframework.boot:spring-boot-starter-jdbc'
-	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.3'
+    // Google Oauth2
+    implementation 'org.springframework.security:spring-security-oauth2-jose:6.3.3'
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+    implementation 'com.google.oauth-client:google-oauth-client:1.36.0'
+    implementation 'com.google.api-client:google-api-client:2.7.0'
 
-//	Spring Security
-	implementation 'org.springframework.boot:spring-boot-starter-security'
-	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+    // Spring Boot 웹 기능과 모니터링 기능
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
-//	Google Oauth2
-	implementation 'org.springframework.security:spring-security-oauth2-jose:6.3.3'
-	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
-	implementation 'com.google.oauth-client:google-oauth-client:1.36.0'
-	implementation 'com.google.api-client:google-api-client:2.7.0'
+    // SpringBoot DevTools
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
-//  Spring Boot 웹 기능과 모니터링 기능
-	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    // Lombok
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
 
-//  SpringBoot DevTools
-	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    // 테스트
+    testImplementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter-test:3.0.3'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-//	Lombok
-	compileOnly 'org.projectlombok:lombok'
-	annotationProcessor 'org.projectlombok:lombok'
+    // Thymeleaf
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 
-//	테스트
-	testImplementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter-test:3.0.3'
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testImplementation 'org.springframework.security:spring-security-test'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-
-//	Thymeleaf
-	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
-
-//	jwt
-	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
-	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
-	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
-
+    // JWT
+    implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 }
 
 dependencyManagement {
-	imports {
-		mavenBom "org.springframework.ai:spring-ai-bom:${springAiVersion}"
-	}
+    imports {
+        mavenBom "org.springframework.ai:spring-ai-bom:${springAiVersion}"
+    }
 }
 
 tasks.named('test') {
-	useJUnitPlatform()
+    useJUnitPlatform()
 }
