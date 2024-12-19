@@ -44,7 +44,7 @@
              name: app
 
          - name: Verify artifact exists
-           run: ls -l build/libs/ || echo "No files found in build/libs/"
+           run: ls -l worthyi-back/build/libs/ || echo "No files found in worthyi-back/build/libs/"
 
          - name: Copy files via SSH
            uses: appleboy/scp-action@v0.1.1
@@ -52,7 +52,7 @@
              host: ${{ secrets.EC2_HOST }}
              username: ${{ secrets.EC2_USER }}
              key: ${{ secrets.EC2_KEY }}
-             source: "build/libs/*.jar"
+             source: "worthyi-back/build/libs/*.jar"
              target: "/home/ec2-user/"
              debug: true
 
