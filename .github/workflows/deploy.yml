@@ -28,7 +28,7 @@
            run: ./gradlew build
 
          - name: Upload artifact
-           uses: actions/upload-artifact@v3
+           uses: actions/upload-artifact@v4
            with:
              name: app
              path: build/libs/*.jar
@@ -39,12 +39,12 @@
 
          steps:
          - name: Download artifact
-           uses: actions/download-artifact@v3
+           uses: actions/download-artifact@v4
            with:
              name: app
 
          - name: Verify artifact exists
-           run: ls -l plugin/build/libs/ || echo "No files found in plugin/build/libs/"
+           run: ls -l build/libs/ || echo "No files found in build/libs/"
 
          - name: Copy files via SSH
            uses: appleboy/scp-action@v0.1.1
@@ -52,7 +52,7 @@
              host: ${{ secrets.EC2_HOST }}
              username: ${{ secrets.EC2_USER }}
              key: ${{ secrets.EC2_KEY }}
-             source: "plugin/build/libs/*.jar"
+             source: "build/libs/*.jar"
              target: "/home/ec2-user/"
              debug: true
 
