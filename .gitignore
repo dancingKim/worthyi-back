@@ -46,3 +46,6 @@ build
 
 # redis
 *.rdb
+
+# .github에 있는 파일은 추가
+!.github/
