@@ -17,9 +17,10 @@
            run: |
              wget https://corretto.aws/downloads/latest/amazon-corretto-23-x64-linux-jdk.tar.gz
              tar -xzf amazon-corretto-23-x64-linux-jdk.tar.gz
-             sudo mv amazon-corretto-23-x64-linux-jdk /usr/local/
-             echo "JAVA_HOME=/usr/local/amazon-corretto-23-x64-linux-jdk" >> $GITHUB_ENV
-             echo "/usr/local/amazon-corretto-23-x64-linux-jdk/bin" >> $GITHUB_PATH
+             ls
+             sudo mv corretto-23.0.1 /usr/local/
+             echo "JAVA_HOME=/usr/local/corretto-23.0.1" >> $GITHUB_ENV
+             echo "/usr/local/corretto-23.0.1/bin" >> $GITHUB_PATH
 
          - name: Verify Java installation
            run: java -version
