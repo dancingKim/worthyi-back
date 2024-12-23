@@ -54,7 +54,7 @@ public class ActionDto {
         // 프론트엔드에서 보내준 감사 내용
 
         public ChildActionInstance toEntity(ActionDto.Request actionDto) {
-            log.info("toEntity Starts");
+            log.info("Converting ActionDto.Request to ChildActionInstance with content: {}", actionDto.childActionContent);
             return ChildActionInstance.builder()
                     .data(actionDto.childActionContent)
                     .build();
@@ -71,15 +71,13 @@ public class ActionDto {
         private String childActionContent;
         private List<AdultActionDto.Response> adultActions;
 
+        
         public static Response fromEntity(ChildActionInstance entity) {
-            List<AdultActionDto.Response> adultActionResponses = null;
-            if (entity.getAdultActionInstances() != null) {
-                adultActionResponses = entity.getAdultActionInstances().stream()
+            List<AdultActionDto.Response> adultActionResponses = entity.getAdultActionInstances() != null
+                    ? entity.getAdultActionInstances().stream()
                         .map(AdultActionDto.Response::fromEntity)
-                        .collect(Collectors.toList());
-            } else {
-                adultActionResponses = new ArrayList<>(); // 빈 리스트로 초기화
-            }
+                        .collect(Collectors.toList())
+                    : new ArrayList<>();
 
             return Response.builder()
                     .childActionId(entity.getChildActionInstanceId())
