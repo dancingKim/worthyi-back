@@ -30,10 +30,10 @@ jobs:
 
     - name: Prepare deployment package
       run: |
-        mkdir -p deploy-package
+        mkdir -p deploy-package/{scripts,app}
+        cp -r scripts/* deploy-package/scripts/
+        cp build/libs/*.jar deploy-package/app/
         cp appspec.yml deploy-package/
-        cp -r scripts deploy-package/
-        cp build/libs/*.jar deploy-package/
         cd deploy-package && zip -r ../app.zip ./*
 
     - name: Configure AWS credentials for S3
