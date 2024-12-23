@@ -6,7 +6,7 @@ spring:
       client:
         registration:
           google:
-            redirect-uri: "https://api-dev.worthyi.com/login/oauth2/code/{registrationId}"
+            redirect-uri: "http://api-dev.worthyilife.com/login/oauth2/code/{registrationId}"
             client-id: ${GOOGLE_CLIENT_ID}
             client-secret: ${GOOGLE_CLIENT_SECRET}
             scope: email, profile
