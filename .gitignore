@@ -40,9 +40,9 @@ out/
 build
 
 # yaml, yml, properties
-*.yaml
-*.yml
-*.properties
+#*.yaml
+#*.yml
+#*.properties
 
 # redis
 *.rdb
