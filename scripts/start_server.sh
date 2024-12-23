@@ -10,15 +10,15 @@ mkdir -p /home/ec2-user/deploy
 # 로그 시작
 echo "=== Application Start: $(date) ===" >> $LOG_FILE
 
-# Redis 서비스 상태 확인 및 시작
-if ! systemctl is-active --quiet redis; then
+# Redis 서비스 상태 확인 및 시작 (redis6로 변경)
+if ! systemctl is-active --quiet redis6
     echo "Starting Redis server..." >> $LOG_FILE
-    sudo systemctl start redis
+    sudo systemctl start redis6
     sleep 5
 fi
 
-# Redis 연결 테스트
-if ! redis-cli ping > /dev/null; then
+# Redis 연결 테스트 (redis-cli 경로 수정)
+if ! /usr/bin/redis-cli ping > /dev/null; then
     echo "Redis server is not responding" >> $ERROR_LOG_FILE
     exit 1
 fi
@@ -44,7 +44,7 @@ nohup java $JAVA_OPTS -jar $JAR_FILE >> $LOG_FILE 2>> $ERROR_LOG_FILE &
 
 # 프로세스 시작 확인
 sleep 10
-if pgrep -f java > /dev/null && redis-cli ping > /dev/null; then
+if pgrep -f java > /dev/null && /usr/bin/redis-cli ping > /dev/null; then
     echo "Application and Redis started successfully: $(date)" >> $LOG_FILE
     exit 0
 else
