@@ -17,8 +17,8 @@ if ! systemctl is-active --quiet redis6; then
     sleep 5
 fi
 
-# Redis 연결 테스트 (redis-cli 경로 수정)
-if ! /usr/bin/redis-cli ping > /dev/null; then
+# Redis 연결 테스트 (redis6-cli 사용)
+if ! /usr/bin/redis6-cli ping > /dev/null; then
     echo "Redis server is not responding" >> $ERROR_LOG_FILE
     exit 1
 fi
@@ -44,7 +44,7 @@ nohup java $JAVA_OPTS -jar $JAR_FILE >> $LOG_FILE 2>> $ERROR_LOG_FILE &
 
 # 프로세스 시작 확인
 sleep 10
-if pgrep -f java > /dev/null && /usr/bin/redis-cli ping > /dev/null; then
+if pgrep -f java > /dev/null && /usr/bin/redis6-cli ping > /dev/null; then
     echo "Application and Redis started successfully: $(date)" >> $LOG_FILE
     exit 0
 else
