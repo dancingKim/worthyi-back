@@ -11,9 +11,10 @@ echo "=== Setup Start: $(date) ===" >> $LOG_FILE
 echo "Stopping any existing java applications..." >> $LOG_FILE
 pkill -f java || true
 
-# 이전 배포 파일 정리
+# 이전 배포 파일 정리 (jar 파일과 스크립트만)
 echo "Cleaning previous deployment files..." >> $LOG_FILE
-rm -rf /home/ec2-user/app/*
+rm -f /home/ec2-user/app/*.jar
+rm -rf /home/ec2-user/app/scripts
 
 # 필요한 디렉토리 생성
 mkdir -p /home/ec2-user/app
