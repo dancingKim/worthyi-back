@@ -32,8 +32,12 @@ if systemctl is-active --quiet redis; then
 else
     echo "Installing Redis..." >> $LOG_FILE
     {
+        # EPEL 저장소 추가
+        sudo yum install -y epel-release
+        
         # Redis 설치
         sudo yum install -y redis
+        
         # Redis 서비스 시작 및 자동 시작 설정
         sudo systemctl start redis
         sudo systemctl enable redis
