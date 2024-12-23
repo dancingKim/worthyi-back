@@ -11,7 +11,7 @@ mkdir -p /home/ec2-user/deploy
 echo "=== Application Start: $(date) ===" >> $LOG_FILE
 
 # Redis 서비스 상태 확인 및 시작 (redis6로 변경)
-if ! systemctl is-active --quiet redis6
+if ! systemctl is-active --quiet redis6; then
     echo "Starting Redis server..." >> $LOG_FILE
     sudo systemctl start redis6
     sleep 5
