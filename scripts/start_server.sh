@@ -25,7 +25,7 @@ fi
 
 echo "Starting application: $JAR_FILE" >> $LOG_FILE
 
-# JAR 파일 실행
+# JAR 파일 실행 옵션
 JAVA_OPTS="-Dspring.profiles.active=dev"
 nohup java $JAVA_OPTS -jar $JAR_FILE >> $LOG_FILE 2>> $ERROR_LOG_FILE &
 
