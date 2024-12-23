@@ -27,25 +27,22 @@ else
 fi
 
 # Redis 설치 확인 및 설치
-if systemctl is-active --quiet redis; then
+if systemctl is-active --quiet redis6; then
     echo "Redis is already installed and running." >> $LOG_FILE
 else
     echo "Installing Redis..." >> $LOG_FILE
     {
-        # EPEL 저장소 추가
-        sudo yum install -y epel-release
-        
-        # Redis 설치
-        sudo yum install -y redis
+        # Redis6 설치
+        sudo yum install -y redis6
         
         # Redis 서비스 시작 및 자동 시작 설정
-        sudo systemctl start redis
-        sudo systemctl enable redis
+        sudo systemctl start redis6
+        sudo systemctl enable redis6
     } >> $LOG_FILE 2>> $ERROR_LOG_FILE
 fi
 
-# Redis 상태 확인
-if systemctl is-active --quiet redis; then
+# Redis 상태 확인 (redis6로 서비스 이름 변경)
+if systemctl is-active --quiet redis6; then
     echo "Redis installation and startup successful" >> $LOG_FILE
     redis-cli ping >> $LOG_FILE 2>&1
 else
