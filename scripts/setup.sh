@@ -18,11 +18,19 @@ rm -f /home/ec2-user/app/*.jar
 # 필요한 디렉토리 생성
 mkdir -p /home/ec2-user/app
 mkdir -p /home/ec2-user/deploy
+mkdir -p /home/ec2-user/app/scripts
 
 # 권한 설정
+echo "Setting up permissions..." >> $LOG_FILE
 chown -R ec2-user:ec2-user /home/ec2-user/app
 chown -R ec2-user:ec2-user /home/ec2-user/deploy
 chmod -R 755 /home/ec2-user/app
 chmod -R 755 /home/ec2-user/deploy
+
+# 스크립트 파일 권한 설정
+if [ -d "/home/ec2-user/app/scripts" ]; then
+    echo "Setting execute permissions for scripts..." >> $LOG_FILE
+    chmod +x /home/ec2-user/app/scripts/*.sh
+fi
 
 echo "=== Setup Complete: $(date) ===" >> $LOG_FILE
