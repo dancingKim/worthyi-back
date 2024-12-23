@@ -47,5 +47,6 @@ build
 # redis
 *.rdb
 
-# .github에 있는 파일은 추가
-!.github/
+# 예외 처리: appspec.yml과 GitHub Actions workflow는 포함
+!appspec.yml
+!.github/**/*.yml
