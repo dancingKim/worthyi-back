@@ -34,8 +34,8 @@ jobs:
     - name: Configure AWS credentials for S3
       uses: aws-actions/configure-aws-credentials@v4
       with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_S3 }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_S3 }}
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_DEPLOYER }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEPLOYER }}
         aws-region: ap-northeast-2
     
     - name: Upload to S3
@@ -46,6 +46,13 @@ jobs:
     needs: build
 
     steps:
+    - name: Configure AWS credentials for S3
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_DEPLOYER }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEPLOYER }}
+        aws-region: ap-northeast-2
+
     - name: Deploy to EC2 using CodeDeploy
       run: |
         aws deploy create-deployment \
