@@ -1,25 +1,39 @@
 #!/bin/bash
 
+# 로그 파일 경로 설정
+LOG_FILE="/home/ec2-user/deploy/application.log"
+ERROR_LOG_FILE="/home/ec2-user/deploy/application_error.log"
+
+# 로그 디렉토리 생성
+mkdir -p /home/ec2-user/deploy
+
+# 로그 시작
+echo "=== Application Start: $(date) ===" >> $LOG_FILE
+
+# 이전 프로세스 종료
+echo "Stopping any existing java applications..." >> $LOG_FILE
+pkill -f java || true
+
 # JAR 파일 경로 설정
-BUILD_JAR=$(ls /home/ec2-user/app/build/libs/*.jar)
-JAR_NAME=$(basename $BUILD_JAR)
+cd /home/ec2-user/app
+JAR_FILE=$(ls *.jar | head -n 1)
 
-# 로그 파일에 빌드 파일명 기록
-echo ">>> build 파일명: $JAR_NAME" >> /home/ec2-user/deploy.log
+if [ -z "$JAR_FILE" ]; then
+    echo "No JAR file found in /home/ec2-user/app" >> $ERROR_LOG_FILE
+    exit 1
+fi
 
-# 빌드된 JAR 파일을 배포 경로로 복사
-echo ">>> build 파일 복사" >> /home/ec2-user/deploy.log
-DEPLOY_PATH=/home/ec2-user/app/
-cp $BUILD_JAR $DEPLOY_PATH
+echo "Starting application: $JAR_FILE" >> $LOG_FILE
 
-# 현재 실행 중인 Java 애플리케이션의 PID를 찾아 종료
-echo ">>> 현재 실행중인 애플리케이션 pid 확인 후 일괄 종료" >> /home/ec2-user/deploy.log
-sudo ps -ef | grep java | awk '{print $2}' | xargs kill -15
+# JAR 파일 실행
+nohup java -jar $JAR_FILE --spring.profiles.active=dev >> $LOG_FILE 2>> $ERROR_LOG_FILE &
 
-# 배포할 JAR 파일의 경로 설정
-DEPLOY_JAR=$DEPLOY_PATH$JAR_NAME
-echo ">>> DEPLOY_JAR 배포" >> /home/ec2-user/deploy.log
-echo ">>> $DEPLOY_JAR의 $JAR_NAME를 실행합니다" >> /home/ec2-user/deploy.log
-
-# JAR 파일을 백그라운드에서 실행하고 로그 파일에 출력
-nohup java -jar $DEPLOY_JAR >> /home/ec2-user/deploy.log 2> /home/ec2-user/deploy_err.log & 
+# 프로세스 시작 확인
+sleep 10
+if pgrep -f java > /dev/null; then
+    echo "Application started successfully: $(date)" >> $LOG_FILE
+    exit 0
+else
+    echo "Failed to start application: $(date)" >> $ERROR_LOG_FILE
+    exit 1
+fi
