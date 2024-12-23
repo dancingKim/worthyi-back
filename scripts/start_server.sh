@@ -14,12 +14,12 @@ echo "=== Application Start: $(date) ===" >> $LOG_FILE
 echo "Stopping any existing java applications..." >> $LOG_FILE
 pkill -f java || true
 
-# JAR 파일 경로 설정 - plain이 아닌 파일 선택
+# JAR 파일 경로 설정
 cd /home/ec2-user/app
-JAR_FILE=$(ls *.jar | grep -v "plain" | head -n 1)
+JAR_FILE=$(ls *.jar | head -n 1)
 
 if [ -z "$JAR_FILE" ]; then
-    echo "No suitable JAR file found in /home/ec2-user/app" >> $ERROR_LOG_FILE
+    echo "No JAR file found in /home/ec2-user/app" >> $ERROR_LOG_FILE
     exit 1
 fi
 
