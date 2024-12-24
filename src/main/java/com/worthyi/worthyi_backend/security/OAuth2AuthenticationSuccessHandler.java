@@ -20,7 +20,7 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
 
     private final JwtTokenProvider jwtTokenProvider;
     private final StringRedisTemplate redisTemplate;
-    private static final String LOCAL_REDIRECT_URL = "myapp://";
+    private static final String LOCAL_REDIRECT_URL = "myapp:/";
 
     public OAuth2AuthenticationSuccessHandler(JwtTokenProvider jwtTokenProvider, StringRedisTemplate redisTemplate) {
         this.jwtTokenProvider = jwtTokenProvider;

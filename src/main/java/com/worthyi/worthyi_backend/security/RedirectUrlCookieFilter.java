@@ -23,7 +23,7 @@ public class RedirectUrlCookieFilter extends OncePerRequestFilter {
 
         String requestURL = request.getRequestURL().toString();
 
-        if (requestURL.startsWith("/auth/authorize")) {
+        if (requestURL.startsWith("/oauth2/authorization")) {
             String redirectUrl = request.getParameter(REDIRECT_URI_PARAM);
             Cookie cookie = new Cookie(REDIRECT_URI_PARAM, redirectUrl);
             cookie.setPath("/");
