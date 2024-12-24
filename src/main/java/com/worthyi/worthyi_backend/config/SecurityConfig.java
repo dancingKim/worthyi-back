@@ -50,6 +50,7 @@ public class SecurityConfig {
                                 "/login",
                                 "/auth/**",
                                 "/oauth2/**",
+                                "/actuator/*",
                                 "/css/**",
                                 "/js/**",
                                 "/images/**"
@@ -96,11 +97,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
+        // React Native 앱에서의 요청을 허용
         configuration.addAllowedOrigin("http://localhost:3000"); // 웹용
+        configuration.addAllowedOrigin("http://192.168.0.6:8081"); // Metro Bundler를 사용하는 React Native 앱
         configuration.addAllowedOrigin("http://10.0.2.2:8081"); // Android 에뮬레이터용
-        configuration.addAllowedOrigin("http://127.0.0.1:8081"); // iOS 시뮬레이터용
-        configuration.addAllowedOriginPattern("http://10.*.*.*"); // 로컬 네트워크의 모든 IP 허용
-        configuration.addAllowedOriginPattern("http://192.168.*.*"); // 로컬 네트워크의 모든 IP 허용
+        configuration.addAllowedOriginPattern("*"); // 모든 요청 허용 (배포 환경에서는 주의
 
         configuration.addAllowedMethod("*");
         configuration.addAllowedHeader("*");
