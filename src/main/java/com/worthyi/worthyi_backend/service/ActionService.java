@@ -40,19 +40,13 @@ public class ActionService {
             Avatar avatar = avatarRepository.findById(1L)
                     .orElseThrow(() -> new RuntimeException("Avatar not found"));
 
-            // toEntity()에서 기본적인 ActionInstance 빌드 후, service에서 관계 설정
+            // content를 JSON으로 변환하여 저장
             ChildActionInstance childActionInstance = actionDto.toEntity(actionDto);
             childActionInstance.setPlaceInstance(placeInstance);
             childActionInstance.setChildActionTemplate(childActionTemplate);
             childActionInstance.setAvatarId(avatar.getAvatarId());
-            childActionInstance.setChildActionTemplate(childActionTemplate);
-            ;
-            // 실제로는 principal에 해당하는 user, avatar를 mapping 해야 하지만, 여기선 avatar_id=1
-            // 만약 ActionInstance에 avatar 직접 연결이 필요하다면 AvatarInVillage나 ActionResult에서 처리
-            // ActionInstance 자체에는 avatar_id가 없다면, 나중에 ActionResult 생성 시 avatar를 연결
-
-            log.info("Saving action {}", childActionInstance);
-            // DB 저장
+            
+            log.info("Saving action with content: {}", actionDto.getContent());
             ChildActionInstance instance = childActionInstanceRepository.save(childActionInstance);
 
             return ApiResponse.success(ActionDto.Response.fromEntity(instance));
@@ -69,16 +63,13 @@ public class ActionService {
         ChildActionInstance childActionInstance = childActionInstanceRepository.findById(actionDto.getChildActionId())
                 .orElseThrow(() -> new RuntimeException("ActionTemplate not found"));
 
-        log.info("before toEntity");
+        log.info("Creating adult action with content: {}", actionDto.getContent());
         AdultActionInstance adultActionInstance = actionDto.toEntity(actionDto);
-        log.info("after toEntity");
-
         adultActionInstance.setChildActionInstance(childActionInstance);
         adultActionInstance.setAdultActionTemplate(adultActionTemplate);
         adultActionInstance.setUserId(1L);
 
         AdultActionInstance instance = adultActionInstanceRepository.save(adultActionInstance);
-
 
         return AdultActionDto.Response.fromEntity(instance);
     }

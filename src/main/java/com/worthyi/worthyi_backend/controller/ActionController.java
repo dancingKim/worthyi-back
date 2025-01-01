@@ -38,13 +38,12 @@ public class ActionController {
             @RequestBody AdultActionDto.Request actionDto
     ){
         log.info("principal: {}", principal);
-        log.info("principal attribute: {}",principal.getAttributes());
+        log.info("principal attribute: {}", principal.getAttributes());
         log.info("principal getName: {}", principal.getName());
         log.info("userId: {}", principal.getUser().getUserId());
-        log.info("childActionContent: {}", actionDto.getAdultActionContent());
+        log.info("content: {}", actionDto.getContent());
 
-        AdultActionDto.Response adultActionDto=  actionService.saveAdultAction(actionDto, principal.getName());
-
+        AdultActionDto.Response adultActionDto = actionService.saveAdultAction(actionDto, principal.getName());
         return ApiResponse.success(adultActionDto);
     }
 

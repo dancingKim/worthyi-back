@@ -1,12 +1,10 @@
 package com.worthyi.worthyi_backend.model.dto;
 
+import com.worthyi.worthyi_backend.util.JsonUtils;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.worthyi.worthyi_backend.model.entity.AdultActionInstance;
-import com.worthyi.worthyi_backend.model.entity.ChildActionInstance;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.List;
 
 @Slf4j
 public class AdultActionDto {
@@ -17,15 +15,14 @@ public class AdultActionDto {
     @AllArgsConstructor
     public static class Request {
 
-        @JsonProperty("adultActionContent")
-        private String adultActionContent;
+        @JsonProperty("content")
+        private ActionContentDto content;
         private Long childActionId;
         // 프론트엔드에서 보내준 감사 내용
 
         public AdultActionInstance toEntity(AdultActionDto.Request request) {
-            log.info("toEntity Starts");
             return AdultActionInstance.builder()
-                    .data(request.adultActionContent)
+                    .data(JsonUtils.toJson(request.content))
                     .build();
         }
     }
@@ -36,15 +33,15 @@ public class AdultActionDto {
     @Getter
     @Setter
     public static class Response {
-        private Long adultActionId;
+        private Long id;
         private Long childActionId;
-        private String adultActionContent;
+        private ActionContentDto content;
 
         public static AdultActionDto.Response fromEntity(AdultActionInstance entity) {
-            return AdultActionDto.Response.builder()
-                    .adultActionContent(entity.getData())
-                    .adultActionId(entity.getAdultActionInstanceId())
+            return Response.builder()
+                    .id(entity.getAdultActionInstanceId())
                     .childActionId(entity.getChildActionInstance().getChildActionInstanceId())
+                    .content(JsonUtils.fromJson(entity.getData(), ActionContentDto.class))
                     .build();
         }
     }
