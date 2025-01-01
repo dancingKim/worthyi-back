@@ -74,4 +74,22 @@ public class ActionController {
         ActionDto.ActionLogResponse result = actionService.getActionLogs(principal, date);
         return ApiResponse.success(result);
     }
+
+    @DeleteMapping("/child/{id}")
+    public ApiResponse<Void> deleteChildAction(
+            @PathVariable Long id,
+            @AuthenticationPrincipal PrincipalDetails principal) {
+        log.info("Deleting child action: {}", id);
+        actionService.deleteChildAction(id, principal.getUser().getUserId());
+        return ApiResponse.success(null);
+    }
+
+    @DeleteMapping("/adult/{id}")
+    public ApiResponse<Void> deleteAdultAction(
+            @PathVariable Long id,
+            @AuthenticationPrincipal PrincipalDetails principal) {
+        log.info("Deleting adult action: {}", id);
+        actionService.deleteAdultAction(id, principal.getUser().getUserId());
+        return ApiResponse.success(null);
+    }
 }
