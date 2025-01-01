@@ -10,6 +10,7 @@ import com.worthyi.worthyi_backend.model.dto.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -157,5 +158,33 @@ public class ActionService {
                 
         log.info("getActionLogs 종료");
         return response;
+    }
+
+    @Transactional
+    public void deleteChildAction(Long childActionId, Long userId) {
+        ChildActionInstance childAction = childActionInstanceRepository.findById(childActionId)
+                .orElseThrow(() -> new RuntimeException("Child action not found"));
+
+        // 권한 확인: 해당 아바타의 소유자인지 확인
+        if (!childAction.getAvatarId().equals(userId)) {
+            throw new RuntimeException("Not authorized to delete this action");
+        }
+
+        childActionInstanceRepository.delete(childAction);
+        log.info("Deleted child action: {}", childActionId);
+    }
+
+    @Transactional
+    public void deleteAdultAction(Long adultActionId, Long userId) {
+        AdultActionInstance adultAction = adultActionInstanceRepository.findById(adultActionId)
+                .orElseThrow(() -> new RuntimeException("Adult action not found"));
+
+        // 권한 확인: 해당 응답의 작성자인지 확인
+        if (!adultAction.getUserId().equals(userId)) {
+            throw new RuntimeException("Not authorized to delete this action");
+        }
+
+        adultActionInstanceRepository.delete(adultAction);
+        log.info("Deleted adult action: {}", adultActionId);
     }
 }
