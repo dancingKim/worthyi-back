@@ -2,7 +2,8 @@ package com.worthyi.worthyi_backend.model.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.Type;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -30,9 +31,11 @@ public class ChildActionInstance extends BaseEntity {
 
     private Long avatarId;
 
-    @Column(columnDefinition = "text")
+    @Column(columnDefinition = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
     private String data; // JSON 형태의 아이 행동 데이터
 
+    @Builder.Default
     @OneToMany(mappedBy = "childActionInstance", cascade = CascadeType.ALL)
     private List<AdultActionInstance> adultActionInstances = new ArrayList<>();
 

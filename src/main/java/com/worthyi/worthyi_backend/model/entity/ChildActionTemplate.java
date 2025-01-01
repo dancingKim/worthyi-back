@@ -28,5 +28,6 @@ public class ChildActionTemplate extends BaseEntity {
     private String dataSchema;
 
     @OneToMany(mappedBy = "childActionTemplate", cascade = CascadeType.ALL)
+    @Builder.Default
     private List<ChildActionInstance> childActionInstances = new ArrayList<>();
 }

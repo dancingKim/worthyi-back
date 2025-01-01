@@ -1,5 +1,6 @@
 package com.worthyi.worthyi_backend.model.dto;
 
+import com.worthyi.worthyi_backend.util.JsonUtils;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.worthyi.worthyi_backend.model.entity.ChildActionInstance;
 import lombok.*;
@@ -39,7 +40,7 @@ public class ActionDto {
     @Builder
     public static class DailyLog {
         private LocalDate date;                // 해당 날짜
-        private List<ActionDto.Response> actions; // 해당 날짜에 발생한 ChildAction(아동 행동) 목록
+        private List<Response> actions; // 해당 날짜에 발생한 ChildAction(아동 행동) 목록
     }
 
     @Builder
@@ -49,14 +50,12 @@ public class ActionDto {
     @AllArgsConstructor
     public static class Request {
 
-        @JsonProperty("childActionContent")
-        private String childActionContent;
-        // 프론트엔드에서 보내준 감사 내용
-
+        @JsonProperty("content")
+        private ActionContentDto content;
+        
         public ChildActionInstance toEntity(ActionDto.Request actionDto) {
-            log.info("Converting ActionDto.Request to ChildActionInstance with content: {}", actionDto.childActionContent);
             return ChildActionInstance.builder()
-                    .data(actionDto.childActionContent)
+                    .data(JsonUtils.toJson(actionDto.content))
                     .build();
         }
     }
@@ -67,22 +66,21 @@ public class ActionDto {
     @Getter
     @Setter
     public static class Response {
-        private Long childActionId;
-        private String childActionContent;
-        private List<AdultActionDto.Response> adultActions;
-
+        private Long id;          // childActionId -> id로 통일
+        private ActionContentDto content;
+        private List<AdultActionDto.Response> responses;  // adultActions -> responses로 변경
         
         public static Response fromEntity(ChildActionInstance entity) {
-            List<AdultActionDto.Response> adultActionResponses = entity.getAdultActionInstances() != null
+            List<AdultActionDto.Response> adultResponses = entity.getAdultActionInstances() != null
                     ? entity.getAdultActionInstances().stream()
                         .map(AdultActionDto.Response::fromEntity)
                         .collect(Collectors.toList())
                     : new ArrayList<>();
 
             return Response.builder()
-                    .childActionId(entity.getChildActionInstanceId())
-                    .childActionContent(entity.getData())
-                    .adultActions(adultActionResponses)
+                    .id(entity.getChildActionInstanceId())
+                    .content(JsonUtils.fromJson(entity.getData(), ActionContentDto.class))
+                    .responses(adultResponses)
                     .build();
         }
     }

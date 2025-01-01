@@ -2,8 +2,8 @@ package com.worthyi.worthyi_backend.model.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-
-import java.time.LocalDateTime;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Builder
 @NoArgsConstructor
@@ -27,6 +27,7 @@ public class AdultActionInstance extends BaseEntity {
 
     private Long userId;
 
-    @Column(columnDefinition = "text")
+    @Column(columnDefinition = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
     private String data; // JSON 형태의 어른 행동 데이터
 }

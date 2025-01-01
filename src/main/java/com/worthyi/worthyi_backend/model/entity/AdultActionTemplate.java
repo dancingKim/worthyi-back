@@ -25,5 +25,6 @@ public class AdultActionTemplate extends BaseEntity {
     private String dataSchema;
 
     @OneToMany(mappedBy = "adultActionTemplate", cascade = CascadeType.ALL)
+    @Builder.Default
     private List<AdultActionInstance> adultActionInstances = new ArrayList<>();
 }
