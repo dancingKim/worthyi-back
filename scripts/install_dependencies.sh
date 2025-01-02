@@ -1,11 +1,16 @@
 #!/bin/bash
 
-# 로그 파일 경로 설정
-LOG_FILE="/home/ec2-user/deploy/install_dependencies.log"
-ERROR_LOG_FILE="/home/ec2-user/deploy/install_dependencies_error.log"
+# 로그 디렉토리 구조 설정
+LOG_DIR="/home/ec2-user/logs"
+DEPLOY_LOG_DIR="${LOG_DIR}/deploy"
+CURRENT_DATE=$(date +%Y-%m-%d)
 
 # 로그 디렉토리 생성
-mkdir -p /home/ec2-user/deploy
+mkdir -p "${DEPLOY_LOG_DIR}/${CURRENT_DATE}"
+
+# 로그 파일 경로 설정
+LOG_FILE="${DEPLOY_LOG_DIR}/${CURRENT_DATE}/install_dependencies.log"
+ERROR_LOG_FILE="${DEPLOY_LOG_DIR}/${CURRENT_DATE}/install_dependencies_error.log"
 
 # 로그 시작
 echo "=== Installation Start: $(date) ===" >> $LOG_FILE

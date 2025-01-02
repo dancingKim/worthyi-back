@@ -8,7 +8,7 @@ import java.util.Optional;
 
 @Repository
 public interface VillageInstanceRepository extends JpaRepository<VillageInstance, Long> {
-    Optional<VillageInstance> findByUserUserId(Long userId);
+    Optional<VillageInstance> findByVillageId(Long villageId);
     
-    Optional<VillageInstance> findByVillageInstanceId(Long villageInstanceId);
+    Optional<VillageInstance> findByUserUserId(Long userId);
 }

@@ -60,7 +60,7 @@ public class ActionService {
             log.debug("Village found: {}", villageInstance.getVillageId());
             
             // 3. VillageInstance -> PlaceInstance 조회
-            PlaceInstance placeInstance = placeInstanceRepository.findByVillageInstance_VillageInstanceId(villageInstance.getVillageId())
+            PlaceInstance placeInstance = placeInstanceRepository.findByVillageInstance_VillageId(villageInstance.getVillageId())
                     .orElseThrow(() -> new RuntimeException(ApiStatus.PLACE_NOT_FOUND.getMessage()));
 
             // 4. ChildActionTemplate 조회

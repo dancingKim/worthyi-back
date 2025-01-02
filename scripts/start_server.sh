@@ -1,11 +1,21 @@
 #!/bin/bash
 
-# 로그 파일 경로 설정
-LOG_FILE="/home/ec2-user/deploy/application.log"
-ERROR_LOG_FILE="/home/ec2-user/deploy/application_error.log"
+# 로그 디렉토리 구조 설정
+LOG_DIR="/home/ec2-user/logs"
+APP_LOG_DIR="${LOG_DIR}/application"
+DEPLOY_LOG_DIR="${LOG_DIR}/deploy"
+CURRENT_DATE=$(date +%Y-%m-%d)
 
 # 로그 디렉토리 생성
-mkdir -p /home/ec2-user/deploy
+mkdir -p "${APP_LOG_DIR}/${CURRENT_DATE}"
+mkdir -p "${DEPLOY_LOG_DIR}/${CURRENT_DATE}"
+
+# 로그 파일 경로 설정
+LOG_FILE="${DEPLOY_LOG_DIR}/${CURRENT_DATE}/application.log"
+ERROR_LOG_FILE="${DEPLOY_LOG_DIR}/${CURRENT_DATE}/application_error.log"
+
+# Spring Boot 애플리케이션의 로깅 설정 추가
+JAVA_OPTS="-Dspring.profiles.active=dev -Dlogging.file.path=${APP_LOG_DIR}/${CURRENT_DATE}"
 
 # 로그 시작
 echo "=== Application Start: $(date) ===" >> $LOG_FILE
@@ -39,7 +49,6 @@ fi
 echo "Starting application: $JAR_FILE" >> $LOG_FILE
 
 # JAR 파일 실행
-JAVA_OPTS="-Dspring.profiles.active=dev"
 nohup java $JAVA_OPTS -jar $JAR_FILE >> $LOG_FILE 2>> $ERROR_LOG_FILE &
 
 # 프로세스 시작 확인
