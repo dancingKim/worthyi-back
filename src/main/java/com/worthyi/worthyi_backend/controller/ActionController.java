@@ -12,7 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
+import com.worthyi.worthyi_backend.common.ApiStatus;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -37,18 +37,24 @@ public class ActionController {
         return ResponseEntity.status(response.getCode()).body(response);
     }
 
-    @PostMapping("/adult")
+    @PostMapping("/{childActionId}/adult")
     public ApiResponse<AdultActionDto.Response> saveAdultAction(
-            @RequestBody AdultActionDto.Request actionDto, 
+            @PathVariable Long childActionId,
+            @RequestBody AdultActionDto.Request actionDto,
             @AuthenticationPrincipal PrincipalDetails principal) {
-        log.info("=== Save Adult Action Start ===");
-        log.debug("Request payload: {}", actionDto);
-        log.debug("User: id={}, email={}", principal.getUser().getUserId(), principal.getUsername());
-        
-        ApiResponse<AdultActionDto.Response> response = actionService.saveAdultAction(actionDto, principal);
-        
-        log.info("=== Save Adult Action End === Status: {}", response.getCode());
-        return response;
+        log.info("=== Save Adult Action Request Received ===");
+        log.debug("Request details - ChildActionId: {}, Payload: {}, UserId: {}", 
+            childActionId, actionDto, principal.getUser().getUserId());
+
+        try {
+            ApiResponse<AdultActionDto.Response> response = 
+                actionService.saveAdultAction(childActionId, actionDto, principal);
+            log.info("Save Adult Action completed with status: {}", response.getCode());
+            return response;
+        } catch (Exception e) {
+            log.error("Failed to save adult action: {}", e.getMessage(), e);
+            return ApiResponse.error(ApiStatus.ACTION_SAVE_FAILED);
+        }
     }
 
     // ActionController.java
@@ -97,17 +103,22 @@ public class ActionController {
         return ApiResponse.success(null);
     }
 
-    @DeleteMapping("/adult/{id}")
+    @DeleteMapping("/{childActionId}/adult/{adultActionId}")
     public ApiResponse<Void> deleteAdultAction(
-            @PathVariable Long id,
+            @PathVariable Long childActionId,
+            @PathVariable Long adultActionId,
             @AuthenticationPrincipal PrincipalDetails principal) {
-        log.info("=== Delete Adult Action Start ===");
-        log.debug("Action ID to delete: {}", id);
-        log.debug("User: id={}, email={}", principal.getUser().getUserId(), principal.getUsername());
-        
-        ApiResponse<Void> response = actionService.deleteAdultAction(id, principal.getUser().getUserId());
-        
-        log.info("=== Delete Adult Action End === Status: {}", response.getCode());
-        return response;
+        log.info("=== Delete Adult Action Request Received ===");
+        log.debug("Request details - ChildActionId: {}, AdultActionId: {}, UserId: {}", 
+            childActionId, adultActionId, principal.getUser().getUserId());
+
+        try {
+            ApiResponse<Void> response = actionService.deleteAdultAction(childActionId, adultActionId, principal.getUser().getUserId());
+            log.info("Delete Adult Action completed with status: {}", response.getCode());
+            return response;
+        } catch (Exception e) {
+            log.error("Failed to delete adult action: {}", e.getMessage(), e);
+            return ApiResponse.error(ApiStatus.ACTION_DELETE_FAILED);
+        }
     }
 }

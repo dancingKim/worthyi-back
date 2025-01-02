@@ -84,46 +84,45 @@ public class ActionService {
         }
     }
 
-    public ApiResponse<AdultActionDto.Response> saveAdultAction(AdultActionDto.Request actionDto, PrincipalDetails principal) {
+    @Transactional
+    public ApiResponse<AdultActionDto.Response> saveAdultAction(
+            Long childActionId, AdultActionDto.Request actionDto, PrincipalDetails principal) {
         log.info("=== Processing Adult Action Save ===");
         try {
             Long userId = principal.getUser().getUserId();
-            log.debug("Processing for userId: {}", userId);
+            log.debug("Processing adult action - ChildActionId: {}, UserId: {}", childActionId, userId);
             
-            // 1. User -> Avatar 조회
-            log.debug("Fetching avatar for userId: {}", userId);
-            Avatar avatar = avatarRepository.findByUserUserId(userId)
+            // 1. ChildAction 존재 여부 확인
+            ChildActionInstance childActionInstance = childActionInstanceRepository.findById(childActionId)
                     .orElseThrow(() -> {
-                        log.error("Avatar not found for userId: {}", userId);
-                        return new RuntimeException(ApiStatus.AVATAR_NOT_FOUND.getMessage());
-                    });
-            log.debug("Avatar found: {}", avatar.getAvatarId());
-
-            // 2. ChildAction 존재 여부 및 권한 확인
-            log.debug("Fetching child action: {}", actionDto.getChildActionId());
-            ChildActionInstance childActionInstance = childActionInstanceRepository.findById(actionDto.getChildActionId())
-                    .orElseThrow(() -> {
-                        log.error("Child action not found: {}", actionDto.getChildActionId());
+                        log.error("Child action not found with id: {}", childActionId);
                         return new RuntimeException(ApiStatus.CHILD_ACTION_NOT_FOUND.getMessage());
                     });
-            log.debug("Child action found: {}", childActionInstance.getChildActionInstanceId());
+            log.debug("Found child action: {}", childActionInstance);
 
-            // 3. AdultActionTemplate 조회
+            // 2. AdultActionTemplate 조회
             AdultActionTemplate adultActionTemplate = adultActionTemplateRepository.findById(1L)
-                    .orElseThrow(() -> new RuntimeException(ApiStatus.ACTION_TEMPLATE_NOT_FOUND.getMessage()));
+                    .orElseThrow(() -> {
+                        log.error("Adult action template not found with id: 1");
+                        return new RuntimeException(ApiStatus.ACTION_TEMPLATE_NOT_FOUND.getMessage());
+                    });
+            log.debug("Found adult action template: {}", adultActionTemplate);
 
+            // 3. AdultActionInstance 생성 및 연관관계 설정
             AdultActionInstance adultActionInstance = actionDto.toEntity(actionDto);
             adultActionInstance.setChildActionInstance(childActionInstance);
             adultActionInstance.setAdultActionTemplate(adultActionTemplate);
             adultActionInstance.setUserId(userId);
+            log.debug("Created adult action instance: {}", adultActionInstance);
 
+            // 4. 저장
             AdultActionInstance savedInstance = adultActionInstanceRepository.save(adultActionInstance);
-            log.info("Adult action saved: {}", savedInstance);
+            log.info("Adult action saved successfully - ChildActionId: {}, AdultActionId: {}", 
+                childActionId, savedInstance.getAdultActionInstanceId());
             
-            log.info("=== Adult Action Save Completed Successfully ===");
             return ApiResponse.success(AdultActionDto.Response.fromEntity(savedInstance));
         } catch (Exception e) {
-            log.error("Failed to save adult action", e);
+            log.error("Failed to save adult action for childActionId: {}", childActionId, e);
             return ApiResponse.error(ApiStatus.ACTION_SAVE_FAILED);
         }
     }
@@ -230,29 +229,49 @@ public class ActionService {
     }
 
     @Transactional
-    public ApiResponse<Void> deleteAdultAction(Long adultActionId, Long userId) {
+    public ApiResponse<Void> deleteAdultAction(Long childActionId, Long adultActionId, Long userId) {
+        log.info("=== Processing Adult Action Delete Request ===");
+        log.debug("Delete request - ChildActionId: {}, AdultActionId: {}, UserId: {}", 
+            childActionId, adultActionId, userId);
+
         try {
-            log.info("Attempting to delete adult action: id={}, userId={}", adultActionId, userId);
-            
-            // 1. AdultAction 조회 및 권한 확인
+            // 1. ChildAction 존재 여부 확인
+            ChildActionInstance childAction = childActionInstanceRepository.findById(childActionId)
+                    .orElseThrow(() -> {
+                        log.error("Child action not found with id: {}", childActionId);
+                        return new RuntimeException(ApiStatus.CHILD_ACTION_NOT_FOUND.getMessage());
+                    });
+            log.debug("Found child action: {}", childAction);
+
+            // 2. AdultAction 조회
             AdultActionInstance adultAction = adultActionInstanceRepository.findById(adultActionId)
                     .orElseThrow(() -> {
-                        log.error("Adult action not found: {}", adultActionId);
+                        log.error("Adult action not found with id: {}", adultActionId);
                         return new RuntimeException(ApiStatus.ADULT_ACTION_NOT_FOUND.getMessage());
                     });
             log.debug("Found adult action: {}", adultAction);
 
+            // 3. ChildAction과 AdultAction의 연관관계 확인
+            if (!adultAction.getChildActionInstance().getChildActionInstanceId().equals(childActionId)) {
+                log.error("Adult action {} does not belong to child action {}", adultActionId, childActionId);
+                return ApiResponse.error(ApiStatus.INVALID_ACTION_RELATIONSHIP);
+            }
+
+            // 4. 권한 확인
             if (!adultAction.getUserId().equals(userId)) {
-                log.warn("Unauthorized deletion attempt: actionUserId={}, requestUserId={}", 
-                    adultAction.getUserId(), userId);
+                log.warn("User {} not authorized to delete adult action {}", userId, adultActionId);
                 return ApiResponse.error(ApiStatus.NOT_AUTHORIZED_TO_DELETE);
             }
 
+            // 5. 삭제 수행
             adultActionInstanceRepository.delete(adultAction);
-            log.info("Adult action deleted successfully: {}", adultActionId);
+            log.info("Adult action deleted successfully - ChildActionId: {}, AdultActionId: {}", 
+                childActionId, adultActionId);
+            
             return ApiResponse.success(null);
         } catch (Exception e) {
-            log.error("Failed to delete adult action", e);
+            log.error("Failed to delete adult action - ChildActionId: {}, AdultActionId: {}", 
+                childActionId, adultActionId, e);
             return ApiResponse.error(ApiStatus.ACTION_DELETE_FAILED);
         }
     }

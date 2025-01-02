@@ -37,7 +37,8 @@ public enum ApiStatus {
     CHILD_ACTION_NOT_FOUND(404, "Child action not found"),
     ADULT_ACTION_NOT_FOUND(404, "Adult action not found"),
     NOT_AUTHORIZED_TO_DELETE(403, "Not authorized to delete this action"),
-    ACTION_DELETE_FAILED(500, "Failed to delete action");
+    ACTION_DELETE_FAILED(500, "Failed to delete action"),
+    INVALID_ACTION_RELATIONSHIP(4003, "Adult action does not belong to the specified child action");
 
     private final int code;
     private final String message;

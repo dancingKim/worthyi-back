@@ -50,7 +50,7 @@ public class SecurityConfig {
                                 "/login",
                                 "/auth/**",
                                 "/oauth2/**",
-                                "/actuator/*",
+                                "/actuator/**",
                                 "/css/**",
                                 "/js/**",
                                 "/images/**"
