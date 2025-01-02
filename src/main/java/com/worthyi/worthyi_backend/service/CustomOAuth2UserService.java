@@ -110,12 +110,12 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
             // PlaceInstance 생성
             PlaceInstance placeInstance = PlaceInstance.builder()
-                .placeTemplate(placeTemplateRepository.findById(1L).orElseThrow())
-                .villageInstance(villageInstance)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
-            placeInstanceRepository.save(placeInstance);
+            .placeTemplate(placeTemplateRepository.findById(1L).orElseThrow())
+            .villageInstance(villageInstance)
+            .name("기본 장소 이름")
+            .description("새로 만들어진 장소입니다.")
+            .build();
+        placeInstanceRepository.save(placeInstance);
 
             // AvatarInVillage 생성
             AvatarInVillage avatarInVillage = AvatarInVillage.builder()
