@@ -90,16 +90,21 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
             // VillageInstance 생성
             VillageInstance villageInstance = VillageInstance.builder()
-            .user(newUser)
-            .villageTemplate(villageTemplateRepository.findById(1L).orElseThrow())
-            .name(newUser.getUsername() + "의 마을")  // 예시
-            .description("새로 만들어진 마을입니다.")
-            .createdAt(LocalDateTime.now())
-            .build();
+                .user(savedUser)
+                .villageTemplate(villageTemplateRepository.findById(1L).orElseThrow())
+                .name(savedUser.getUsername() + "의 마을")
+                .description("새로 만들어진 마을입니다.")
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+            villageInstanceRepository.save(villageInstance);
 
             // Avatar 생성
             Avatar avatar = Avatar.builder()
                 .user(savedUser)
+                .name(savedUser.getUsername() + "의 아바타")
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
                 .build();
             avatarRepository.save(avatar);
 
@@ -107,6 +112,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             PlaceInstance placeInstance = PlaceInstance.builder()
                 .placeTemplate(placeTemplateRepository.findById(1L).orElseThrow())
                 .villageInstance(villageInstance)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
                 .build();
             placeInstanceRepository.save(placeInstance);
 
