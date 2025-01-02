@@ -115,13 +115,13 @@ public class JwtTokenProvider {
     }
 
    public Authentication getAuthentication(String token) {
-        log.info("=== Extracting Authentication from Token ===");
+        log.info("=== Getting Authentication from Token ===");
         
         Claims claims = parseClaims(token);
-        log.debug("Claims extracted: subject={}, roles={}", claims.getSubject(), claims.get("roles"));
+        log.debug("Claims extracted from token: subject={}", claims.getSubject());
 
         List<SimpleGrantedAuthority> authorities = getAuthorities(claims);
-        log.debug("Authorities parsed: {}", authorities);
+        log.debug("Authorities parsed from token: {}", authorities);
 
         Long userId = claims.get("userId", Long.class);
         String email = claims.getSubject();
@@ -195,15 +195,15 @@ public class JwtTokenProvider {
 
     // Request의 Header에서 토큰 값 가져오기 ("Authorization" : "Bearer [토큰]")
     public String resolveToken(HttpServletRequest request) {
-        log.info("=== Resolving Token from Request ===");
+        log.debug("Resolving token from request headers");
         String bearerToken = request.getHeader("Authorization");
         
         if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
             String token = bearerToken.substring(7);
-            log.debug("Token resolved successfully: {}", token);
+            log.debug("Bearer token found and resolved");
             return token;
         }
-        log.warn("No Bearer token found in request");
+        log.debug("No bearer token found in request");
         return null;
     }
 

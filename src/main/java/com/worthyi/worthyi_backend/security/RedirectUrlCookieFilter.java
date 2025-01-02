@@ -20,22 +20,30 @@ public class RedirectUrlCookieFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-
+        log.info("=== RedirectUrl Cookie Filter Start ===");
         String requestURL = request.getRequestURL().toString();
+        log.debug("Request URL: {}", requestURL);
 
         if (requestURL.startsWith("/oauth2/authorization")) {
             String redirectUrl = request.getParameter(REDIRECT_URI_PARAM);
+            log.debug("Redirect URL parameter found: {}", redirectUrl);
+            
             Cookie cookie = new Cookie(REDIRECT_URI_PARAM, redirectUrl);
             cookie.setPath("/");
             cookie.setHttpOnly(true);
             cookie.setMaxAge(MAX_AGE);
             response.addCookie(cookie);
+            log.debug("Redirect URL cookie set: {}, maxAge: {}", redirectUrl, MAX_AGE);
+            
             try {
+                log.debug("Processing OAuth2 authorization request");
             } catch (Exception ex) {
-                logger.error("Could not set user authentification in security context", ex);
-                log.info("Unauthorized request");
+                log.error("Failed to set user authentication in security context", ex);
+                log.warn("Unauthorized request detected");
             }
         }
+        
+        log.info("=== RedirectUrl Cookie Filter End ===");
         filterChain.doFilter(request, response);
     }
 }

@@ -40,39 +40,46 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
         try {
-            log.info("Incoming request: {} {}", request.getMethod(), request.getRequestURI());
+            log.info("=== JWT Authentication Filter Start ===");
+            log.debug("Processing request: {} {}", request.getMethod(), request.getRequestURI());
+            
             String token = jwtTokenProvider.resolveToken(request);
-            log.debug("Resolved token: {}", token);
+            log.debug("JWT token resolved: {}", token != null ? "present" : "absent");
 
             if (token != null) {
+                String isLogout = redisTemplate.opsForValue().get("blacklist:" + token);
+                log.debug("Token blacklist check: {}", isLogout != null ? "blacklisted" : "valid");
 
-                String isLougout = redisTemplate.opsForValue().get("blacklist:" + token);
-
-                if (isLougout != null) {
+                if (isLogout != null) {
+                    log.warn("Attempt to use blacklisted token");
                     sendErrorResponse(response, ApiStatus.UNAUTHORIZED, "로그아웃된 토큰입니다");
                     return;
-                } else if (!jwtTokenProvider.validateToken(token)) {
+                }
+
+                if (!jwtTokenProvider.validateToken(token)) {
+                    log.warn("Invalid token detected");
                     sendErrorResponse(response, ApiStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다");
                     return;
-                } else if (jwtTokenProvider.isTokenExpired(token)) {
-                    log.warn("JWT token is expired");
+                }
+
+                if (jwtTokenProvider.isTokenExpired(token)) {
+                    log.warn("Expired token detected");
                     sendErrorResponse(response, ApiStatus.UNAUTHORIZED, "JWT 토큰이 만료되었습니다");
                     return;
                 }
 
                 Authentication authentication = jwtTokenProvider.getAuthentication(token);
-                log.debug("Extracted authentication: {}", authentication);
-
+                log.debug("Authentication created: principal={}", authentication.getName());
+                
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-            } else {
-                log.warn("JWT token is missing");
+                log.debug("Authentication set in SecurityContext");
             }
 
+            log.info("=== JWT Authentication Filter End ===");
             filterChain.doFilter(request, response);
         } catch (Exception e) {
-            log.error("인증 처리 중 오류 발생", e);
+            log.error("Authentication processing error", e);
             sendErrorResponse(response, ApiStatus.INTERNAL_SERVER_ERROR, "인증 처리 중 오류가 발생했습니다");
-            return;
         }
     }
 }

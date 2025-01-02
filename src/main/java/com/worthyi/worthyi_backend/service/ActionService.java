@@ -232,16 +232,24 @@ public class ActionService {
     @Transactional
     public ApiResponse<Void> deleteAdultAction(Long adultActionId, Long userId) {
         try {
+            log.info("Attempting to delete adult action: id={}, userId={}", adultActionId, userId);
+            
             // 1. AdultAction 조회 및 권한 확인
             AdultActionInstance adultAction = adultActionInstanceRepository.findById(adultActionId)
-                    .orElseThrow(() -> new RuntimeException(ApiStatus.ADULT_ACTION_NOT_FOUND.getMessage()));
+                    .orElseThrow(() -> {
+                        log.error("Adult action not found: {}", adultActionId);
+                        return new RuntimeException(ApiStatus.ADULT_ACTION_NOT_FOUND.getMessage());
+                    });
+            log.debug("Found adult action: {}", adultAction);
 
             if (!adultAction.getUserId().equals(userId)) {
+                log.warn("Unauthorized deletion attempt: actionUserId={}, requestUserId={}", 
+                    adultAction.getUserId(), userId);
                 return ApiResponse.error(ApiStatus.NOT_AUTHORIZED_TO_DELETE);
             }
 
             adultActionInstanceRepository.delete(adultAction);
-            log.info("Adult action deleted: {}", adultActionId);
+            log.info("Adult action deleted successfully: {}", adultActionId);
             return ApiResponse.success(null);
         } catch (Exception e) {
             log.error("Failed to delete adult action", e);

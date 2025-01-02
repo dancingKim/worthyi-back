@@ -105,9 +105,9 @@ public class ActionController {
         log.debug("Action ID to delete: {}", id);
         log.debug("User: id={}, email={}", principal.getUser().getUserId(), principal.getUsername());
         
-        actionService.deleteAdultAction(id, principal.getUser().getUserId());
+        ApiResponse<Void> response = actionService.deleteAdultAction(id, principal.getUser().getUserId());
         
-        log.info("=== Delete Adult Action End === Successfully deleted");
-        return ApiResponse.success(null);
+        log.info("=== Delete Adult Action End === Status: {}", response.getCode());
+        return response;
     }
 }
