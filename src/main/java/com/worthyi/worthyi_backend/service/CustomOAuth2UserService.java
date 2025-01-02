@@ -29,6 +29,7 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Optional;
 
@@ -70,6 +71,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             log.info("Creating new user for email: {}", oAuth2UserInfo.getEmail());
             // 사용자 없을 시 신규 생성 후 저장
             User newUser = oAuth2UserInfo.toEntity();
+            newUser.setUserRoles(new ArrayList<>());  // 빈 리스트로 초기화
             User savedUser = userRepository.save(newUser);
             log.info("New user created: {}", savedUser);
 
@@ -88,6 +90,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     .role(userRole)
                     .build();
             userRoleRepository.save(userRoleEntity);
+            savedUser.getUserRoles().add(userRoleEntity);  // 생성된 UserRole 추가
 
             // VillageInstance 생성
             VillageInstance villageInstance = VillageInstance.builder()
