@@ -127,7 +127,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     .id(avatarInVillageId) // 복합 키 설정
                     .avatar(avatar) // @MapsId("avatarId") 부분
                     .villageInstance(villageInstance) // @MapsId("villageId") 부분
-                    .joinedAt(LocalDateTime.now())
                     .build();
 
             // 이제 복합 키가 직접 세팅됐으므로 충돌 없이 저장 가능
