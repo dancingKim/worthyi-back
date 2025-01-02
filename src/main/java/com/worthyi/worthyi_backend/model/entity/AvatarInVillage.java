@@ -27,7 +27,4 @@ public class AvatarInVillage extends BaseEntity {
     @JoinColumn(name = "village_id", nullable = false)
     @ToString.Exclude
     private VillageInstance villageInstance;
-
-    @Column(name = "joined_at", nullable = false, updatable = false)
-    private LocalDateTime joinedAt;
 }
