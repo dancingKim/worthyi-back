@@ -90,10 +90,12 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
             // VillageInstance 생성
             VillageInstance villageInstance = VillageInstance.builder()
-                .user(savedUser)
-                .villageTemplate(villageTemplateRepository.findById(1L).orElseThrow())
-                .build();
-            villageInstanceRepository.save(villageInstance);
+            .user(newUser)
+            .villageTemplate(villageTemplateRepository.findById(1L).orElseThrow())
+            .name(newUser.getUsername() + "의 마을")  // 예시
+            .description("새로 만들어진 마을입니다.")
+            .createdAt(LocalDateTime.now())
+            .build();
 
             // Avatar 생성
             Avatar avatar = Avatar.builder()
