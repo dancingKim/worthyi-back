@@ -1,28 +1,28 @@
 package com.worthyi.worthyi_backend.security;
 
 import com.worthyi.worthyi_backend.model.entity.User;
+import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Getter
 public class PrincipalDetails implements OAuth2User, UserDetails {
 
-    private User user;
-    private Map<String, Object> attributes;
-    private String attributeKey;
+    private final User user;
+    private final Map<String, Object> attributes;
+    private final String attributeKey;
 
     public PrincipalDetails(User user, Map<String, Object> attributes, String attributeKey) {
         this.user = user;
         this.attributes = attributes;
         this.attributeKey = attributeKey;
-    }
-    public User getUser() {
-        return user;
     }
 
     @Override
@@ -32,7 +32,8 @@ public class PrincipalDetails implements OAuth2User, UserDetails {
 
     @Override
     public String getName() {
-        return attributes.get(attributeKey).toString();
+        Object attr = attributes.get(attributeKey);
+        return attr != null ? attr.toString() : user.getUsername(); // Fallback to username if attribute is null
     }
 
     @Override
@@ -47,7 +48,11 @@ public class PrincipalDetails implements OAuth2User, UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        // 사용자의 권한 반환
+        // userRoles가 null일 경우 빈 리스트 반환
+        if (user.getUserRoles() == null) {
+            return Collections.emptyList();
+        }
+
         return user.getUserRoles().stream()
                 .map(userRole -> new SimpleGrantedAuthority(userRole.getRole().getAuthorityName()))
                 .collect(Collectors.toList());
@@ -74,6 +79,7 @@ public class PrincipalDetails implements OAuth2User, UserDetails {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public <A> A getAttribute(String name) {
         return (A) attributes.get(name);
     }
