@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 import java.time.DayOfWeek;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
+import java.util.Collections;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -31,160 +32,220 @@ public class ActionService {
     private final AdultActionTemplateRepository adultActionTemplateRepository;
     private final ChildActionInstanceRepository childActionInstanceRepository;
     private final AdultActionInstanceRepository adultActionInstanceRepository;
+    private final UserRepository userRepository;
+    private final VillageInstanceRepository villageInstanceRepository;
 
     public ApiResponse<ActionDto.Response> saveChildAction(ActionDto.Request actionDto, PrincipalDetails user) {
+        log.info("=== Processing Child Action Save ===");
         try {
-            PlaceInstance placeInstance = placeInstanceRepository.findById(1L)
-                    .orElseThrow(() -> new RuntimeException(ApiStatus.NOT_FOUND.getMessage()));
+            Long userId = user.getUser().getUserId();
+            log.debug("Processing for userId: {}", userId);
+            
+            // 1. User -> Avatar 조회
+            log.debug("Fetching avatar for userId: {}", userId);
+            Avatar avatar = avatarRepository.findByUser_UserId(userId)
+                    .orElseThrow(() -> {
+                        log.error("Avatar not found for userId: {}", userId);
+                        return new RuntimeException(ApiStatus.AVATAR_NOT_FOUND.getMessage());
+                    });
+            log.debug("Avatar found: {}", avatar.getAvatarId());
+            
+            // 2. VillageInstance 조회
+            log.debug("Fetching village for userId: {}", userId);
+            VillageInstance villageInstance = villageInstanceRepository.findByUser_UserId(userId)
+                    .orElseThrow(() -> {
+                        log.error("Village not found for userId: {}", userId);
+                        return new RuntimeException(ApiStatus.VILLAGE_NOT_FOUND.getMessage());
+                    });
+            log.debug("Village found: {}", villageInstance.getVillageId());
+            
+            // 3. VillageInstance -> PlaceInstance 조회
+            PlaceInstance placeInstance = placeInstanceRepository.findByVillageInstance_VillageInstanceId(villageInstance.getVillageId())
+                    .orElseThrow(() -> new RuntimeException(ApiStatus.PLACE_NOT_FOUND.getMessage()));
+            
+            // 4. ChildActionTemplate 조회
             ChildActionTemplate childActionTemplate = childActionTemplateRepository.findById(1L)
-                    .orElseThrow(() -> new RuntimeException("ActionTemplate not found"));
-            Avatar avatar = avatarRepository.findById(1L)
-                    .orElseThrow(() -> new RuntimeException("Avatar not found"));
+                    .orElseThrow(() -> new RuntimeException(ApiStatus.ACTION_TEMPLATE_NOT_FOUND.getMessage()));
 
-            // content를 JSON으로 변환하여 저장
+            // 5. ChildActionInstance 생성 및 저장
             ChildActionInstance childActionInstance = actionDto.toEntity(actionDto);
             childActionInstance.setPlaceInstance(placeInstance);
             childActionInstance.setChildActionTemplate(childActionTemplate);
             childActionInstance.setAvatarId(avatar.getAvatarId());
             
             log.info("Saving action with content: {}", actionDto.getContent());
-            ChildActionInstance instance = childActionInstanceRepository.save(childActionInstance);
+            ChildActionInstance savedInstance = childActionInstanceRepository.save(childActionInstance);
 
-            return ApiResponse.success(ActionDto.Response.fromEntity(instance));
+            log.info("=== Child Action Save Completed Successfully ===");
+            return ApiResponse.success(ActionDto.Response.fromEntity(savedInstance));
         } catch (Exception e) {
             log.error("Failed to save child action", e);
-            return ApiResponse.error(ApiStatus.INTERNAL_SERVER_ERROR, "액션 저장 중 오류가 발생했습니다");
+            return ApiResponse.error(ApiStatus.ACTION_SAVE_FAILED);
         }
     }
 
-    public AdultActionDto.Response saveAdultAction(AdultActionDto.Request actionDto, String email) {
-        log.info("actionService Starts");
-        AdultActionTemplate adultActionTemplate = adultActionTemplateRepository.findById(1L)
-                .orElseThrow(() -> new RuntimeException("ActionTemplate not found"));
-        ChildActionInstance childActionInstance = childActionInstanceRepository.findById(actionDto.getChildActionId())
-                .orElseThrow(() -> new RuntimeException("ActionTemplate not found"));
+    public ApiResponse<AdultActionDto.Response> saveAdultAction(AdultActionDto.Request actionDto, PrincipalDetails principal) {
+        log.info("=== Processing Adult Action Save ===");
+        try {
+            Long userId = principal.getUser().getUserId();
+            log.debug("Processing for userId: {}", userId);
+            
+            // 1. User -> Avatar 조회
+            log.debug("Fetching avatar for userId: {}", userId);
+            Avatar avatar = avatarRepository.findByUser_UserId(userId)
+                    .orElseThrow(() -> {
+                        log.error("Avatar not found for userId: {}", userId);
+                        return new RuntimeException(ApiStatus.AVATAR_NOT_FOUND.getMessage());
+                    });
+            log.debug("Avatar found: {}", avatar.getAvatarId());
 
-        log.info("Creating adult action with content: {}", actionDto.getContent());
-        AdultActionInstance adultActionInstance = actionDto.toEntity(actionDto);
-        adultActionInstance.setChildActionInstance(childActionInstance);
-        adultActionInstance.setAdultActionTemplate(adultActionTemplate);
-        adultActionInstance.setUserId(1L);
+            // 2. ChildAction 존재 여부 및 권한 확인
+            log.debug("Fetching child action: {}", actionDto.getChildActionId());
+            ChildActionInstance childActionInstance = childActionInstanceRepository.findById(actionDto.getChildActionId())
+                    .orElseThrow(() -> {
+                        log.error("Child action not found: {}", actionDto.getChildActionId());
+                        return new RuntimeException(ApiStatus.CHILD_ACTION_NOT_FOUND.getMessage());
+                    });
+            log.debug("Child action found: {}", childActionInstance.getId());
 
-        AdultActionInstance instance = adultActionInstanceRepository.save(adultActionInstance);
+            // 3. AdultActionTemplate 조회
+            AdultActionTemplate adultActionTemplate = adultActionTemplateRepository.findById(1L)
+                    .orElseThrow(() -> new RuntimeException(ApiStatus.ACTION_TEMPLATE_NOT_FOUND.getMessage()));
 
-        return AdultActionDto.Response.fromEntity(instance);
+            AdultActionInstance adultActionInstance = actionDto.toEntity(actionDto);
+            adultActionInstance.setChildActionInstance(childActionInstance);
+            adultActionInstance.setAdultActionTemplate(adultActionTemplate);
+            adultActionInstance.setUserId(userId);
+
+            AdultActionInstance savedInstance = adultActionInstanceRepository.save(adultActionInstance);
+            log.info("Adult action saved: {}", savedInstance);
+            
+            log.info("=== Adult Action Save Completed Successfully ===");
+            return ApiResponse.success(AdultActionDto.Response.fromEntity(savedInstance));
+        } catch (Exception e) {
+            log.error("Failed to save adult action", e);
+            return ApiResponse.error(ApiStatus.ACTION_SAVE_FAILED);
+        }
     }
 
     // ActionService.java
     public List<ActionDto.Response> getChildActionsByDate(Long userId, LocalDate date) {
-        // 유저 아이디를 이용해 유저의 아바타 목록을 조회
-       Long avatarId =  avatarRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found")).getAvatarId();
+        log.info("=== Fetching Child Actions By Date ===");
+        log.debug("UserId: {}, Date: {}", userId, date);
+        
+        try {
+            Avatar avatar = avatarRepository.findByUser_UserId(userId)
+                    .orElseThrow(() -> {
+                        log.error("Avatar not found for userId: {}", userId);
+                        return new RuntimeException(ApiStatus.AVATAR_NOT_FOUND.getMessage());
+                    });
+            log.debug("Avatar found: {}", avatar.getAvatarId());
 
-        LocalDateTime startOfDay = date.atStartOfDay();
-        LocalDateTime endOfDay = date.plusDays(1).atStartOfDay();
+            LocalDateTime startOfDay = date.atStartOfDay();
+            LocalDateTime endOfDay = date.plusDays(1).atStartOfDay();
+            log.debug("Time range: {} to {}", startOfDay, endOfDay);
 
-        log.info("startOfDay: {}", startOfDay);
-        log.info("endOfDay: {}", endOfDay);
+            List<ChildActionInstance> instances = childActionInstanceRepository
+                    .findAllByDateAndAvatarId(avatar.getAvatarId(), startOfDay, endOfDay);
+            log.info("Found {} actions for date {}", instances.size(), date);
 
-        List<ChildActionInstance> instances = childActionInstanceRepository.findAllByDateAndAvatarId(avatarId,startOfDay,endOfDay);
-
-        instances.forEach(childActionInstance -> {
-            log.info("createdAt: {}", childActionInstance.getCreatedAt());
-        });
-
-
-        return instances.stream()
-                .map(ActionDto.Response::fromEntity)
-                .collect(Collectors.toList());
+            return instances.stream()
+                    .map(ActionDto.Response::fromEntity)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("Error fetching child actions by date", e);
+            throw e;
+        }
     }
 
     public ActionDto.ActionLogResponse getActionLogs(PrincipalDetails principal, LocalDate date) {
-        log.info("getActionLogs 시작 - userId: {}, 요청 날짜: {}", principal.getUser().getUserId(), date);
-        
         Long userId = principal.getUser().getUserId();
-        Long avatarId = avatarRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found")).getAvatarId();
-        log.info("조회된 avatarId: {}", avatarId);
-
-        // 오늘의 시작과 끝
-        LocalDateTime todayStart = date.atStartOfDay();
-        LocalDateTime todayEnd = date.plusDays(1).atStartOfDay();
-        log.info("오늘 기간 - 시작: {}, 종료: {}", todayStart, todayEnd);
-
-        // 이번 년도의 시작과 끝
-        LocalDateTime yearStart = date.withDayOfYear(1).atStartOfDay();
-        LocalDateTime yearEnd = date.withDayOfYear(date.lengthOfYear()).plusDays(1).atStartOfDay();
-        log.info("연간 기간 - 시작: {}, 종료: {}", yearStart, yearEnd);
-
-        // 이번 주의 시작과 끝
-        LocalDateTime weekStart = date.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).atStartOfDay();
-        LocalDateTime weekEnd = date.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY)).plusDays(1).atStartOfDay();
-        log.info("주간 기간 - 시작: {}, 종료: {}", weekStart, weekEnd);
-
-        // 이번 달의 시작과 끝
-        LocalDateTime monthStart = date.withDayOfMonth(1).atStartOfDay();
-        LocalDateTime monthEnd = date.withDayOfMonth(date.lengthOfMonth()).plusDays(1).atStartOfDay();
-        log.info("월간 기간 - 시작: {}, 종료: {}", monthStart, monthEnd);
-
-        // 오늘의 감사 목록 조회
-        List<ChildActionInstance> todayActions = childActionInstanceRepository.findAllByDateAndAvatarId(
-                avatarId, todayStart, todayEnd);
-        log.info("오늘의 감사 기록 수: {}", todayActions.size());
         
-        List<ActionDto.DailyLog> dailyLogs = new ArrayList<>();
-        dailyLogs.add(ActionDto.DailyLog.builder()
-                .date(date)
-                .actions(todayActions.stream()
-                        .map(ActionDto.Response::fromEntity)
-                        .collect(Collectors.toList()))
-                .build());
+        // 1. Avatar 조회
+        Avatar avatar = avatarRepository.findByUser_UserId(userId)
+                .orElseThrow(() -> new RuntimeException("Avatar not found"));
 
-        // 각 기간별 감사 일수 조회
+        // 나머지 로직...
+        LocalDate weekStart = date.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+        LocalDate weekEnd = date.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
+        LocalDate monthStart = date.withDayOfMonth(1);
+        LocalDate monthEnd = date.withDayOfMonth(date.lengthOfMonth());
+        LocalDate yearStart = date.withDayOfYear(1);
+        LocalDate yearEnd = date.withDayOfYear(date.lengthOfYear());
+
+        List<ActionDto.DailyLog> dailyLogs = getChildActionsByDate(avatar.getAvatarId(), date).stream()
+                .map(action -> ActionDto.DailyLog.builder()
+                        .date(date)
+                        .actions(Collections.singletonList(action))
+                        .build())
+                .collect(Collectors.toList());
+
+        // 통계 계산
         int weeklyCount = childActionInstanceRepository.countDistinctDatesByAvatarIdAndDateBetween(
-                avatarId, weekStart, weekEnd);
+                avatar.getAvatarId(), 
+                weekStart.atStartOfDay(),  // LocalDate -> LocalDateTime
+                weekEnd.atStartOfDay()
+        );
         int monthlyCount = childActionInstanceRepository.countDistinctDatesByAvatarIdAndDateBetween(
-                avatarId, monthStart, monthEnd); 
+                avatar.getAvatarId(), 
+                monthStart.atStartOfDay(), 
+                monthEnd.atStartOfDay()
+        );
         int yearlyCount = childActionInstanceRepository.countDistinctDatesByAvatarIdAndDateBetween(
-                avatarId, yearStart, yearEnd);
-        
-        log.info("집계 결과 - 주간: {}, 월간: {}, 연간: {}", weeklyCount, monthlyCount, yearlyCount);
+                avatar.getAvatarId(), 
+                yearStart.atStartOfDay(), 
+                yearEnd.atStartOfDay()
+        );
 
-        ActionDto.ActionLogResponse response = ActionDto.ActionLogResponse.builder()
+        return ActionDto.ActionLogResponse.builder()
                 .dailyLogs(dailyLogs)
                 .weeklyCount(weeklyCount)
                 .monthlyCount(monthlyCount)
                 .yearlyCount(yearlyCount)
                 .build();
-                
-        log.info("getActionLogs 종료");
-        return response;
     }
 
     @Transactional
-    public void deleteChildAction(Long childActionId, Long userId) {
-        ChildActionInstance childAction = childActionInstanceRepository.findById(childActionId)
-                .orElseThrow(() -> new RuntimeException("Child action not found"));
+    public ApiResponse<Void> deleteChildAction(Long childActionId, Long userId) {
+        try {
+            // 1. Avatar 조회
+            Avatar avatar = avatarRepository.findByUser_UserId(userId)
+                    .orElseThrow(() -> new RuntimeException(ApiStatus.AVATAR_NOT_FOUND.getMessage()));
 
-        // 권한 확인: 해당 아바타의 소유자인지 확인
-        if (!childAction.getAvatarId().equals(userId)) {
-            throw new RuntimeException("Not authorized to delete this action");
+            // 2. ChildAction 조회 및 권한 확인
+            ChildActionInstance childAction = childActionInstanceRepository.findById(childActionId)
+                    .orElseThrow(() -> new RuntimeException(ApiStatus.CHILD_ACTION_NOT_FOUND.getMessage()));
+
+            if (!childAction.getAvatarId().equals(avatar.getAvatarId())) {
+                return ApiResponse.error(ApiStatus.NOT_AUTHORIZED_TO_DELETE);
+            }
+
+            childActionInstanceRepository.delete(childAction);
+            log.info("Child action deleted: {}", childActionId);
+            return ApiResponse.success(null);
+        } catch (Exception e) {
+            log.error("Failed to delete child action", e);
+            return ApiResponse.error(ApiStatus.ACTION_DELETE_FAILED);
         }
-
-        childActionInstanceRepository.delete(childAction);
-        log.info("Deleted child action: {}", childActionId);
     }
 
     @Transactional
-    public void deleteAdultAction(Long adultActionId, Long userId) {
-        AdultActionInstance adultAction = adultActionInstanceRepository.findById(adultActionId)
-                .orElseThrow(() -> new RuntimeException("Adult action not found"));
+    public ApiResponse<Void> deleteAdultAction(Long adultActionId, Long userId) {
+        try {
+            // 1. AdultAction 조회 및 권한 확인
+            AdultActionInstance adultAction = adultActionInstanceRepository.findById(adultActionId)
+                    .orElseThrow(() -> new RuntimeException(ApiStatus.ADULT_ACTION_NOT_FOUND.getMessage()));
 
-        // 권한 확인: 해당 응답의 작성자인지 확인
-        if (!adultAction.getUserId().equals(userId)) {
-            throw new RuntimeException("Not authorized to delete this action");
+            if (!adultAction.getUserId().equals(userId)) {
+                return ApiResponse.error(ApiStatus.NOT_AUTHORIZED_TO_DELETE);
+            }
+
+            adultActionInstanceRepository.delete(adultAction);
+            log.info("Adult action deleted: {}", adultActionId);
+            return ApiResponse.success(null);
+        } catch (Exception e) {
+            log.error("Failed to delete adult action", e);
+            return ApiResponse.error(ApiStatus.ACTION_DELETE_FAILED);
         }
-
-        adultActionInstanceRepository.delete(adultAction);
-        log.info("Deleted adult action: {}", adultActionId);
     }
 }

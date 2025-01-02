@@ -47,22 +47,25 @@ public class JwtTokenProvider {
 
     // JWT 토큰 생성 메소드
     public String createToken(Authentication authentication) {
-        log.debug("Creating JWT token for authentication: {}", authentication);
+        log.info("=== Creating JWT Token ===");
+        log.debug("Creating token for authentication: Principal={}", authentication.getName());
 
         return createToken(authentication, authentication.getAuthorities());
     }
 
     public String createToken(Authentication authentication, Collection<? extends GrantedAuthority> roles) {
-        log.info("토큰 생성 시작: 사용자={}", authentication.getName());
-
+        log.info("=== Creating JWT Token with Roles ===");
+        
         PrincipalDetails principalDetails = (PrincipalDetails) authentication.getPrincipal();
-        log.debug("Principal 정보: {}", principalDetails);
+        log.debug("Principal details: userId={}, email={}", 
+            principalDetails.getUser().getUserId(), 
+            principalDetails.getUsername());
 
         String email = authentication.getName();
         String authorities = roles.stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
-        log.debug("권한 정보: {}", authorities);
+        log.debug("Authorities to be included in token: {}", authorities);
 
         Claims claims = Jwts.claims().setSubject(email);
         claims.put("roles", authorities);
@@ -76,7 +79,8 @@ public class JwtTokenProvider {
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
 
-        log.info("토큰 생성 완료: {}", token);
+        log.info("Token created successfully");
+        log.debug("Token: {}", token);
         return token;
     }
 
@@ -111,27 +115,26 @@ public class JwtTokenProvider {
     }
 
    public Authentication getAuthentication(String token) {
-
+        log.info("=== Extracting Authentication from Token ===");
+        
         Claims claims = parseClaims(token);
+        log.debug("Claims extracted: subject={}, roles={}", claims.getSubject(), claims.get("roles"));
 
         List<SimpleGrantedAuthority> authorities = getAuthorities(claims);
-
-//  밑에 부분을 주석 처리한다.
-        //    User principal = new User(claims.getSubject(), "", authorities);
+        log.debug("Authorities parsed: {}", authorities);
 
         Long userId = claims.get("userId", Long.class);
         String email = claims.getSubject();
-        User user = User.builder().userId(userId).build();
-        PrincipalDetails principal =
-                new PrincipalDetails(user, Map.of(
-                        "email", email,
-                        "userId", userId
-                ), "email");
-// 인증 정보 반환
-        Authentication authentication = new UsernamePasswordAuthenticationToken(principal, token, authorities);
-        log.debug("Authentication object created: {}", authentication);
-// 이제 PrincipalDetails를 이용하는 코드 시작
+        log.debug("User details from token: userId={}, email={}", userId, email);
 
+        User user = User.builder().userId(userId).build();
+        PrincipalDetails principal = new PrincipalDetails(user, Map.of(
+                "email", email,
+                "userId", userId
+        ), "email");
+
+        Authentication authentication = new UsernamePasswordAuthenticationToken(principal, token, authorities);
+        log.info("Authentication object created successfully");
         return authentication;
     }
 
@@ -192,39 +195,38 @@ public class JwtTokenProvider {
 
     // Request의 Header에서 토큰 값 가져오기 ("Authorization" : "Bearer [토큰]")
     public String resolveToken(HttpServletRequest request) {
-        log.debug("Resolving token from request header.");
-
+        log.info("=== Resolving Token from Request ===");
         String bearerToken = request.getHeader("Authorization");
-        // "Bearer "로 시작하는지 확인
+        
         if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
-            String token = bearerToken.substring(7); // "Bearer " 이후의 토큰 값 반환
-            log.debug("Token resolved: {}", token);
+            String token = bearerToken.substring(7);
+            log.debug("Token resolved successfully: {}", token);
             return token;
         }
-        log.warn("Authorization header is missing or does not start with 'Bearer '.");
+        log.warn("No Bearer token found in request");
         return null;
     }
 
     // 토큰의 유효성 및 만료일자 확인
     public boolean validateToken(String token) {
-        log.info("토큰 검증 시작");
+        log.info("=== Validating Token ===");
         try {
             Jwts.parserBuilder()
                     .setSigningKey(key)
                     .build()
                     .parseClaimsJws(token);
-            log.info("토큰 검증 성공");
+            log.info("Token validation successful");
             return true;
         } catch (ExpiredJwtException e) {
-            log.error("만료된 토큰: {}", e.getMessage());
+            log.error("Token expired: {}", e.getMessage());
         } catch (UnsupportedJwtException e) {
-            log.error("지원되지 않는 토큰: {}", e.getMessage());
+            log.error("Unsupported token: {}", e.getMessage());
         } catch (MalformedJwtException e) {
-            log.error("잘못된 형식의 토큰: {}", e.getMessage());
+            log.error("Malformed token: {}", e.getMessage());
         } catch (SecurityException e) {
-            log.error("유효하지 않은 서명: {}", e.getMessage());
+            log.error("Invalid signature: {}", e.getMessage());
         } catch (IllegalArgumentException e) {
-            log.error("잘못된 토큰: {}", e.getMessage());
+            log.error("Invalid token: {}", e.getMessage());
         }
         return false;
     }
