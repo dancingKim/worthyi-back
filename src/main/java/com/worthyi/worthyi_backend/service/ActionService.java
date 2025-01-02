@@ -42,13 +42,13 @@ public class ActionService {
             log.debug("Processing for userId: {}", userId);
             
             // 1. User -> Avatar 조회
-            log.debug("Fetching avatar for userId: {}", userId);
+            log.debug("Searching for avatar with userId: {}", userId);
             Avatar avatar = avatarRepository.findByUserUserId(userId)
                     .orElseThrow(() -> {
                         log.error("Avatar not found for userId: {}", userId);
                         return new RuntimeException(ApiStatus.AVATAR_NOT_FOUND.getMessage());
                     });
-            log.debug("Avatar found: {}", avatar.getAvatarId());
+            log.debug("Found avatar: {}", avatar);
             
             // 2. VillageInstance 조회
             log.debug("Fetching village for userId: {}", userId);
