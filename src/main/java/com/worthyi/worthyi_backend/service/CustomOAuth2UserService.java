@@ -17,6 +17,7 @@ import com.worthyi.worthyi_backend.repository.VillageInstanceRepository;
 import com.worthyi.worthyi_backend.repository.AvatarRepository;
 import com.worthyi.worthyi_backend.repository.PlaceInstanceRepository;
 import com.worthyi.worthyi_backend.model.entity.AvatarInVillage;
+import com.worthyi.worthyi_backend.model.entity.AvatarInVillageId;
 import com.worthyi.worthyi_backend.repository.AvatarInVillageRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -49,7 +50,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         log.info("=== OAuth2 User Loading Start ===");
-        
+
         OAuth2User oAuth2User = super.loadUser(userRequest);
         log.debug("OAuth2User loaded from provider: attributes={}", oAuth2User.getAttributes());
 
@@ -90,43 +91,49 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
             // VillageInstance 생성
             VillageInstance villageInstance = VillageInstance.builder()
-                .user(savedUser)
-                .villageTemplate(villageTemplateRepository.findById(1L).orElseThrow())
-                .name(savedUser.getUsername() + "의 마을")
-                .description("새로 만들어진 마을입니다.")
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
+                    .user(savedUser)
+                    .villageTemplate(villageTemplateRepository.findById(1L).orElseThrow())
+                    .name(savedUser.getUsername() + "의 마을")
+                    .description("새로 만들어진 마을입니다.")
+                    .createdAt(LocalDateTime.now())
+                    .updatedAt(LocalDateTime.now())
+                    .build();
             villageInstanceRepository.save(villageInstance);
 
             // Avatar 생성
             Avatar avatar = Avatar.builder()
-                .user(savedUser)
-                .name(savedUser.getUsername() + "의 아바타")
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
+                    .user(savedUser)
+                    .name(savedUser.getUsername() + "의 아바타")
+                    .createdAt(LocalDateTime.now())
+                    .updatedAt(LocalDateTime.now())
+                    .build();
             avatarRepository.save(avatar);
 
             // PlaceInstance 생성
             PlaceInstance placeInstance = PlaceInstance.builder()
-            .placeTemplate(placeTemplateRepository.findById(1L).orElseThrow())
-            .villageInstance(villageInstance)
-            .name("기본 장소 이름")
-            .description("새로 만들어진 장소입니다.")
-            .build();
-        placeInstanceRepository.save(placeInstance);
+                    .placeTemplate(placeTemplateRepository.findById(1L).orElseThrow())
+                    .villageInstance(villageInstance)
+                    .name("기본 장소 이름")
+                    .description("새로 만들어진 장소입니다.")
+                    .build();
+            placeInstanceRepository.save(placeInstance);
 
-            // AvatarInVillage 생성
+            // 예) CustomOAuth2UserService.loadUser() 안에 추가
+            AvatarInVillageId avatarInVillageId = new AvatarInVillageId(
+                    avatar.getAvatarId(),
+                    villageInstance.getVillageId());
+
             AvatarInVillage avatarInVillage = AvatarInVillage.builder()
-                .avatar(avatar)
-                .villageInstance(villageInstance)
-                .joinedAt(LocalDateTime.now())
-                .build();
-            avatarInVillageRepository.save(avatarInVillage);
+                    .id(avatarInVillageId) // 복합 키 설정
+                    .avatar(avatar) // @MapsId("avatarId") 부분
+                    .villageInstance(villageInstance) // @MapsId("villageId") 부분
+                    .joinedAt(LocalDateTime.now())
+                    .build();
 
-            log.info("Created instances - Village: {}, Avatar: {}, Place: {}, AvatarInVillage: {}", 
-                villageInstance, avatar, placeInstance, avatarInVillage);
+            // 이제 복합 키가 직접 세팅됐으므로 충돌 없이 저장 가능
+            avatarInVillageRepository.save(avatarInVillage);
+            log.info("Created instances - Village: {}, Avatar: {}, Place: {}, AvatarInVillage: {}",
+                    villageInstance, avatar, placeInstance, avatarInVillage);
 
             return savedUser;
         });
