@@ -7,6 +7,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.ArrayList;
 
 @ToString
 @Entity
@@ -51,6 +52,7 @@ public class User extends BaseEntity {
     @OneToMany(mappedBy = "creatorUser", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<VillageTemplate> villageTemplates;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<UserRole> userRoles;
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @Builder.Default
+    private List<UserRole> userRoles = new ArrayList<>();
 }
