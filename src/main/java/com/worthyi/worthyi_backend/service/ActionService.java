@@ -43,7 +43,7 @@ public class ActionService {
             
             // 1. User -> Avatar 조회
             log.debug("Fetching avatar for userId: {}", userId);
-            Avatar avatar = avatarRepository.findByUser_UserId(userId)
+            Avatar avatar = avatarRepository.findByUserUserId(userId)
                     .orElseThrow(() -> {
                         log.error("Avatar not found for userId: {}", userId);
                         return new RuntimeException(ApiStatus.AVATAR_NOT_FOUND.getMessage());
@@ -52,7 +52,7 @@ public class ActionService {
             
             // 2. VillageInstance 조회
             log.debug("Fetching village for userId: {}", userId);
-            VillageInstance villageInstance = villageInstanceRepository.findByUser_UserId(userId)
+            VillageInstance villageInstance = villageInstanceRepository.findByUserUserId(userId)
                     .orElseThrow(() -> {
                         log.error("Village not found for userId: {}", userId);
                         return new RuntimeException(ApiStatus.VILLAGE_NOT_FOUND.getMessage());
@@ -62,7 +62,7 @@ public class ActionService {
             // 3. VillageInstance -> PlaceInstance 조회
             PlaceInstance placeInstance = placeInstanceRepository.findByVillageInstance_VillageInstanceId(villageInstance.getVillageId())
                     .orElseThrow(() -> new RuntimeException(ApiStatus.PLACE_NOT_FOUND.getMessage()));
-            
+
             // 4. ChildActionTemplate 조회
             ChildActionTemplate childActionTemplate = childActionTemplateRepository.findById(1L)
                     .orElseThrow(() -> new RuntimeException(ApiStatus.ACTION_TEMPLATE_NOT_FOUND.getMessage()));
@@ -92,7 +92,7 @@ public class ActionService {
             
             // 1. User -> Avatar 조회
             log.debug("Fetching avatar for userId: {}", userId);
-            Avatar avatar = avatarRepository.findByUser_UserId(userId)
+            Avatar avatar = avatarRepository.findByUserUserId(userId)
                     .orElseThrow(() -> {
                         log.error("Avatar not found for userId: {}", userId);
                         return new RuntimeException(ApiStatus.AVATAR_NOT_FOUND.getMessage());
@@ -106,7 +106,7 @@ public class ActionService {
                         log.error("Child action not found: {}", actionDto.getChildActionId());
                         return new RuntimeException(ApiStatus.CHILD_ACTION_NOT_FOUND.getMessage());
                     });
-            log.debug("Child action found: {}", childActionInstance.getId());
+            log.debug("Child action found: {}", childActionInstance.getChildActionInstanceId());
 
             // 3. AdultActionTemplate 조회
             AdultActionTemplate adultActionTemplate = adultActionTemplateRepository.findById(1L)
@@ -134,7 +134,7 @@ public class ActionService {
         log.debug("UserId: {}, Date: {}", userId, date);
         
         try {
-            Avatar avatar = avatarRepository.findByUser_UserId(userId)
+            Avatar avatar = avatarRepository.findByUserUserId(userId)
                     .orElseThrow(() -> {
                         log.error("Avatar not found for userId: {}", userId);
                         return new RuntimeException(ApiStatus.AVATAR_NOT_FOUND.getMessage());
@@ -162,7 +162,7 @@ public class ActionService {
         Long userId = principal.getUser().getUserId();
         
         // 1. Avatar 조회
-        Avatar avatar = avatarRepository.findByUser_UserId(userId)
+        Avatar avatar = avatarRepository.findByUserUserId(userId)
                 .orElseThrow(() -> new RuntimeException("Avatar not found"));
 
         // 나머지 로직...
@@ -209,7 +209,7 @@ public class ActionService {
     public ApiResponse<Void> deleteChildAction(Long childActionId, Long userId) {
         try {
             // 1. Avatar 조회
-            Avatar avatar = avatarRepository.findByUser_UserId(userId)
+            Avatar avatar = avatarRepository.findByUserUserId(userId)
                     .orElseThrow(() -> new RuntimeException(ApiStatus.AVATAR_NOT_FOUND.getMessage()));
 
             // 2. ChildAction 조회 및 권한 확인

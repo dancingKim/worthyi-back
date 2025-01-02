@@ -26,7 +26,18 @@ public enum ApiStatus {
 
     // Server Error Codes
     INTERNAL_SERVER_ERROR(500, "Internal server error"),
-    SERVICE_UNAVAILABLE(503, "Service unavailable");
+    SERVICE_UNAVAILABLE(503, "Service unavailable"),
+
+    // 추가할 상태 코드들
+    AVATAR_NOT_FOUND(404, "Avatar not found"),
+    VILLAGE_NOT_FOUND(404, "Village not found"),
+    PLACE_NOT_FOUND(404, "Place not found"),
+    ACTION_TEMPLATE_NOT_FOUND(404, "Action template not found"),
+    ACTION_SAVE_FAILED(500, "Failed to save action"),
+    CHILD_ACTION_NOT_FOUND(404, "Child action not found"),
+    ADULT_ACTION_NOT_FOUND(404, "Adult action not found"),
+    NOT_AUTHORIZED_TO_DELETE(403, "Not authorized to delete this action"),
+    ACTION_DELETE_FAILED(500, "Failed to delete action");
 
     private final int code;
     private final String message;
