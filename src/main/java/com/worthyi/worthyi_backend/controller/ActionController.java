@@ -18,7 +18,6 @@ import java.util.List;
 
 @Slf4j
 @RequiredArgsConstructor
-@PreAuthorize("hasAuthority('ROLE_USER')")
 @RestController
 @RequestMapping("/action")
 public class ActionController {
@@ -28,38 +27,43 @@ public class ActionController {
     public ResponseEntity<ApiResponse<ActionDto.Response>> saveChildAction(
             @RequestBody ActionDto.Request request,
             @AuthenticationPrincipal PrincipalDetails principal) {
+        log.info("=== Save Child Action Start ===");
+        log.debug("Request payload: {}", request);
+        log.debug("User: id={}, email={}", principal.getUser().getUserId(), principal.getUsername());
+        
         ApiResponse<ActionDto.Response> response = actionService.saveChildAction(request, principal);
+        
+        log.info("=== Save Child Action End === Status: {}", response.getCode());
         return ResponseEntity.status(response.getCode()).body(response);
     }
 
     @PostMapping("/adult")
-    public ApiResponse<AdultActionDto.Response> createAdultAction(
-            @AuthenticationPrincipal PrincipalDetails principal,
-            @RequestBody AdultActionDto.Request actionDto
-    ){
-        log.info("principal: {}", principal);
-        log.info("principal attribute: {}", principal.getAttributes());
-        log.info("principal getName: {}", principal.getName());
-        log.info("userId: {}", principal.getUser().getUserId());
-        log.info("content: {}", actionDto.getContent());
-
-        AdultActionDto.Response adultActionDto = actionService.saveAdultAction(actionDto, principal.getName());
-        return ApiResponse.success(adultActionDto);
+    public ApiResponse<AdultActionDto.Response> saveAdultAction(
+            @RequestBody AdultActionDto.Request actionDto, 
+            @AuthenticationPrincipal PrincipalDetails principal) {
+        log.info("=== Save Adult Action Start ===");
+        log.debug("Request payload: {}", actionDto);
+        log.debug("User: id={}, email={}", principal.getUser().getUserId(), principal.getUsername());
+        
+        ApiResponse<AdultActionDto.Response> response = actionService.saveAdultAction(actionDto, principal);
+        
+        log.info("=== Save Adult Action End === Status: {}", response.getCode());
+        return response;
     }
 
     // ActionController.java
     @GetMapping
     public ApiResponse<List<ActionDto.Response>> getChildActionsByDate(
             @AuthenticationPrincipal PrincipalDetails principal,
-               @RequestParam("date")
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+            @RequestParam("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
     ) {
-        log.info("getChildActionsByDate: {}", date);
-        log.info("principal: {}", principal);
-        log.info("userId: {}", principal.getUser().getUserId());
-        Long userId = principal.getUser().getUserId();
-
-        List<ActionDto.Response> responses = actionService.getChildActionsByDate(userId, date);
+        log.info("=== Get Child Actions By Date Start ===");
+        log.debug("Requested date: {}", date);
+        log.debug("User: id={}, email={}", principal.getUser().getUserId(), principal.getUsername());
+        
+        List<ActionDto.Response> responses = actionService.getChildActionsByDate(principal.getUser().getUserId(), date);
+        
+        log.info("=== Get Child Actions By Date End === Found {} actions", responses.size());
         return ApiResponse.success(responses);
     }
 
@@ -69,9 +73,13 @@ public class ActionController {
             @AuthenticationPrincipal PrincipalDetails principal,
             @RequestParam("date") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date
     ) {
-        log.info("getLogs: {}", date);
-        log.info("userId: {}", principal.getUser().getUserId());
+        log.info("=== Get Action Logs Start ===");
+        log.debug("Requested date: {}", date);
+        log.debug("User: id={}, email={}", principal.getUser().getUserId(), principal.getUsername());
+        
         ActionDto.ActionLogResponse result = actionService.getActionLogs(principal, date);
+        
+        log.info("=== Get Action Logs End === Successfully retrieved logs");
         return ApiResponse.success(result);
     }
 
@@ -79,8 +87,13 @@ public class ActionController {
     public ApiResponse<Void> deleteChildAction(
             @PathVariable Long id,
             @AuthenticationPrincipal PrincipalDetails principal) {
-        log.info("Deleting child action: {}", id);
+        log.info("=== Delete Child Action Start ===");
+        log.debug("Action ID to delete: {}", id);
+        log.debug("User: id={}, email={}", principal.getUser().getUserId(), principal.getUsername());
+        
         actionService.deleteChildAction(id, principal.getUser().getUserId());
+        
+        log.info("=== Delete Child Action End === Successfully deleted");
         return ApiResponse.success(null);
     }
 
@@ -88,8 +101,13 @@ public class ActionController {
     public ApiResponse<Void> deleteAdultAction(
             @PathVariable Long id,
             @AuthenticationPrincipal PrincipalDetails principal) {
-        log.info("Deleting adult action: {}", id);
+        log.info("=== Delete Adult Action Start ===");
+        log.debug("Action ID to delete: {}", id);
+        log.debug("User: id={}, email={}", principal.getUser().getUserId(), principal.getUsername());
+        
         actionService.deleteAdultAction(id, principal.getUser().getUserId());
+        
+        log.info("=== Delete Adult Action End === Successfully deleted");
         return ApiResponse.success(null);
     }
 }
