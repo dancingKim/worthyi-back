@@ -22,11 +22,11 @@ public class UserController {
     @GetMapping("/me")
     public ApiResponse<UserDto.Response> getUserInfo(@AuthenticationPrincipal PrincipalDetails principal) {
         Long userId = principal.getUser().getUserId();
-        log.info("GET /user/me {} - Requesting user information",userId);
+        log.info("GET /user/me - Requesting user information for userId: {}", userId);
         
         UserDto.Response response = userService.getUserInfo(userId);
         
-        log.info("GET /api/users/{} - Successfully retrieved user information", userId);
+        log.info("GET /user/me - Successfully retrieved user information for userId: {}", userId);
         return ApiResponse.success(response);
     }
 } 
