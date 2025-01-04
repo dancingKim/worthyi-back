@@ -57,11 +57,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
 
 
-                if (jwtTokenProvider.isTokenExpired(token)) {
-                    log.warn("Expired token detected");
-                    sendErrorResponse(response, ApiStatus.UNAUTHORIZED, "JWT 토큰이 만료되었습니다");
-                    return;
-                }
+                // if (jwtTokenProvider.isTokenExpired(token)) {
+                    // log.warn("Expired token detected");
+                    // sendErrorResponse(response, ApiStatus.UNAUTHORIZED, "JWT 토큰이 만료되었습니다");
+                    // return;
+                // }
 
 
                 if (!jwtTokenProvider.validateToken(token)) {

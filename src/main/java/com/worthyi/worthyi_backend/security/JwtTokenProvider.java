@@ -101,8 +101,10 @@ public class JwtTokenProvider {
         Claims claims = Jwts.claims().setSubject(email);
         claims.put("userId", principalDetails.getUser().getUserId());
 
-        LocalDateTime expirationTime = now.plus(refreshTokenValidTime / (60 * 1000), ChronoUnit.MINUTES);
-        Date expirationDate = Date.from(expirationTime.atZone(ZoneId.systemDefault()).toInstant());
+        ZonedDateTime expirationTime = now.atZone(ZoneId.systemDefault())
+                                          .withZoneSameInstant(ZoneId.of("UTC"))
+                                          .plus(refreshTokenValidTime / (60 * 1000), ChronoUnit.MINUTES);
+        Date expirationDate = Date.from(expirationTime.toInstant());
 
         return Jwts.builder()
                 .setClaims(claims)
