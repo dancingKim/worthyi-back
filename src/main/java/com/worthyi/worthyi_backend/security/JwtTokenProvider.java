@@ -76,10 +76,11 @@ public class JwtTokenProvider {
         claims.put("userId", principalDetails.getUser().getUserId());
         
         ZonedDateTime now = ZonedDateTime.now(ZoneId.of("UTC"));
-        Date expirationDate = Date.from(now.plus(Duration.ofMillis(tokenValidTime)).toInstant());
+        ZonedDateTime expirationZonedDateTime = now.plus(Duration.ofMillis(tokenValidTime));
+        Date expirationDate = Date.from(expirationZonedDateTime.toInstant());
 
         log.debug("Token creation time (UTC): {}", now);
-        log.debug("Token expiration time (UTC): {}", expirationDate);
+        log.debug("Token expiration time (UTC): {}", expirationZonedDateTime);
 
         String token = Jwts.builder()
                 .setClaims(claims)
@@ -160,10 +161,12 @@ public class JwtTokenProvider {
                     .getExpiration();
 
             ZonedDateTime now = ZonedDateTime.now(ZoneId.of("UTC"));
-            log.debug("Current time (UTC): {}", now);
-            log.debug("Token expiration time (UTC): {}", expiration);
+            ZonedDateTime expirationZoned = ZonedDateTime.ofInstant(expiration.toInstant(), ZoneId.of("UTC"));
 
-            return expiration.before(Date.from(now.toInstant()));
+            log.debug("Current time (UTC): {}", now);
+            log.debug("Token expiration time (UTC): {}", expirationZoned);
+
+            return expirationZoned.isBefore(now);
         } catch (Exception e) {
             return true;
         }
