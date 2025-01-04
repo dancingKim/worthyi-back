@@ -19,6 +19,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import org.springframework.security.core.Authentication;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.Duration;
 
 @Slf4j
 public class JwtTokenProvider {
@@ -71,11 +74,13 @@ public class JwtTokenProvider {
         claims.put("roles", authorities);
         claims.put("userId", principalDetails.getUser().getUserId());
         
-        Date now = new Date();
+        LocalDateTime now = LocalDateTime.now();
+        Date expirationDate = Date.from(now.plus(Duration.ofMillis(tokenValidTime)).atZone(ZoneId.systemDefault()).toInstant());
+
         String token = Jwts.builder()
                 .setClaims(claims)
-                .setIssuedAt(now)
-                .setExpiration(new Date(now.getTime() + tokenValidTime))
+                .setIssuedAt(Date.from(now.atZone(ZoneId.systemDefault()).toInstant()))
+                .setExpiration(expirationDate)
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
 
@@ -87,18 +92,19 @@ public class JwtTokenProvider {
     public String createRefreshToken(Authentication authentication) {
         PrincipalDetails principalDetails =
                 (PrincipalDetails) authentication.getPrincipal();
-        Date now = new Date();
+        LocalDateTime now = LocalDateTime.now();
         String email = authentication.getName();
         Claims claims = Jwts.claims().setSubject(email);
         claims.put("userId", principalDetails.getUser().getUserId());
 
+        Date expirationDate = Date.from(now.plus(Duration.ofMillis(refreshTokenValidTime)).atZone(ZoneId.systemDefault()).toInstant());
+
         return Jwts.builder()
                 .setClaims(claims)
-                .setIssuedAt(now)
-                .setExpiration(new Date(now.getTime() + refreshTokenValidTime))
+                .setIssuedAt(Date.from(now.atZone(ZoneId.systemDefault()).toInstant()))
+                .setExpiration(expirationDate)
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
-
     }
 
     public String createRefreshToken(String email) {
