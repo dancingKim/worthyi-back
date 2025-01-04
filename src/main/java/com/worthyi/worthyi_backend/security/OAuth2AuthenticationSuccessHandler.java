@@ -12,6 +12,8 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.time.ZonedDateTime;
+import java.time.ZoneId;
 
 import static com.worthyi.worthyi_backend.security.RedirectUrlCookieFilter.REDIRECT_URI_PARAM;
 
@@ -57,6 +59,9 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
         refreshTokenCookie.setMaxAge((int) (jwtTokenProvider.getRefreshTokenValidTime() / 1000));
         response.addCookie(refreshTokenCookie);
         log.debug("Refresh token cookie added to response");
+
+        ZonedDateTime now = ZonedDateTime.now(ZoneId.of("UTC"));
+        log.debug("Refresh token cookie creation time (UTC): {}", now);
 
         response.addHeader("Refresh-Token", refreshToken);
         
