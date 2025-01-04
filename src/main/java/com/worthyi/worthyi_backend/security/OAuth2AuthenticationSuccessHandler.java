@@ -14,6 +14,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.time.ZonedDateTime;
 import java.time.ZoneId;
+import java.time.Duration;
 
 import static com.worthyi.worthyi_backend.security.RedirectUrlCookieFilter.REDIRECT_URI_PARAM;
 
@@ -44,8 +45,11 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
         String refreshToken = jwtTokenProvider.createRefreshToken(authentication);
 
         log.info("Saving refresh token to Redis");
-        redisTemplate.opsForValue().set("refresh:" + email, refreshToken,
-                jwtTokenProvider.getRefreshTokenValidTime(), TimeUnit.MILLISECONDS);
+        long refreshTokenValidTime = jwtTokenProvider.getRefreshTokenValidTime();
+        redisTemplate.opsForValue().set("refresh:" + email, refreshToken, refreshTokenValidTime, TimeUnit.MILLISECONDS);
+
+        log.debug("Refresh token valid time (ms): {}", refreshTokenValidTime);
+        log.debug("Refresh token will expire at (UTC): {}", ZonedDateTime.now(ZoneId.of("UTC")).plus(Duration.ofMillis(refreshTokenValidTime)));
 
         Optional<Cookie> oCookie = Arrays.stream(request.getCookies())
                 .filter(cookie -> cookie.getName().equals(REDIRECT_URI_PARAM))
@@ -56,12 +60,13 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
         refreshTokenCookie.setHttpOnly(true);
         refreshTokenCookie.setSecure(true);
         refreshTokenCookie.setPath("/");
-        refreshTokenCookie.setMaxAge((int) (jwtTokenProvider.getRefreshTokenValidTime() / 1000));
+        refreshTokenCookie.setMaxAge((int) (refreshTokenValidTime / 1000));
         response.addCookie(refreshTokenCookie);
         log.debug("Refresh token cookie added to response");
 
         ZonedDateTime now = ZonedDateTime.now(ZoneId.of("UTC"));
         log.debug("Refresh token cookie creation time (UTC): {}", now);
+        log.debug("Refresh token cookie max age (s): {}", refreshTokenCookie.getMaxAge());
 
         response.addHeader("Refresh-Token", refreshToken);
         
