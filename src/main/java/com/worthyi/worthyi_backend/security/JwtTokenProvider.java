@@ -22,6 +22,7 @@ import org.springframework.security.core.Authentication;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.Duration;
+import java.time.ZonedDateTime;
 
 @Slf4j
 public class JwtTokenProvider {
@@ -74,12 +75,15 @@ public class JwtTokenProvider {
         claims.put("roles", authorities);
         claims.put("userId", principalDetails.getUser().getUserId());
         
-        LocalDateTime now = LocalDateTime.now();
-        Date expirationDate = Date.from(now.plus(Duration.ofMillis(tokenValidTime)).atZone(ZoneId.systemDefault()).toInstant());
+        ZonedDateTime now = ZonedDateTime.now(ZoneId.of("UTC"));
+        Date expirationDate = Date.from(now.plus(Duration.ofMillis(tokenValidTime)).toInstant());
+
+        log.debug("Token creation time (UTC): {}", now);
+        log.debug("Token expiration time (UTC): {}", expirationDate);
 
         String token = Jwts.builder()
                 .setClaims(claims)
-                .setIssuedAt(Date.from(now.atZone(ZoneId.systemDefault()).toInstant()))
+                .setIssuedAt(Date.from(now.toInstant()))
                 .setExpiration(expirationDate)
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
@@ -90,18 +94,20 @@ public class JwtTokenProvider {
     }
 
     public String createRefreshToken(Authentication authentication) {
-        PrincipalDetails principalDetails =
-                (PrincipalDetails) authentication.getPrincipal();
-        LocalDateTime now = LocalDateTime.now();
+        PrincipalDetails principalDetails = (PrincipalDetails) authentication.getPrincipal();
+        ZonedDateTime now = ZonedDateTime.now(ZoneId.of("UTC"));
         String email = authentication.getName();
         Claims claims = Jwts.claims().setSubject(email);
         claims.put("userId", principalDetails.getUser().getUserId());
 
-        Date expirationDate = Date.from(now.plus(Duration.ofMillis(refreshTokenValidTime)).atZone(ZoneId.systemDefault()).toInstant());
+        Date expirationDate = Date.from(now.plus(Duration.ofMillis(refreshTokenValidTime)).toInstant());
+
+        log.debug("Refresh token creation time (UTC): {}", now);
+        log.debug("Refresh token expiration time (UTC): {}", expirationDate);
 
         return Jwts.builder()
                 .setClaims(claims)
-                .setIssuedAt(Date.from(now.atZone(ZoneId.systemDefault()).toInstant()))
+                .setIssuedAt(Date.from(now.toInstant()))
                 .setExpiration(expirationDate)
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
@@ -153,11 +159,14 @@ public class JwtTokenProvider {
                     .getBody()
                     .getExpiration();
 
-            return expiration.before(new Date());
-        } catch (Exception e){
+            ZonedDateTime now = ZonedDateTime.now(ZoneId.of("UTC"));
+            log.debug("Current time (UTC): {}", now);
+            log.debug("Token expiration time (UTC): {}", expiration);
+
+            return expiration.before(Date.from(now.toInstant()));
+        } catch (Exception e) {
             return true;
         }
-
     }
 
     // Claims에서 권한 정보 추출

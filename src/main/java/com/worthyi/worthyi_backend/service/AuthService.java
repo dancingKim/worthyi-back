@@ -9,6 +9,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -31,6 +33,10 @@ public class AuthService {
         // Access Token을 블랙리스트 처리하여 만료될 때까지 유효하지 않도록 설정
         long expiration = jwtTokenProvider.getExpiration(accessToken) - System.currentTimeMillis();
         redisTemplate.opsForValue().set("blacklist:" + accessToken, "logout", expiration, TimeUnit.MILLISECONDS);
+
+        ZonedDateTime now = ZonedDateTime.now(ZoneId.of("UTC"));
+        log.debug("Logout time (UTC): {}", now);
+        log.debug("Access token expiration time (UTC): {}", expiration);
     }
 
     public String refreshTokens(String refreshToken, HttpServletResponse response) {
@@ -42,7 +48,9 @@ public class AuthService {
         if (redisRefreshToken != null && redisRefreshToken.equals(refreshToken)) {
             List<GrantedAuthority> authorities = userService.getUserAuthoritiesByEmail(email);
             String newAccessToken = jwtTokenProvider.createToken(authentication, authorities);
-            String newRefreshToken = jwtTokenProvider.createRefreshToken(authentication);            // 새로운 Refresh Token을 Redis에 저장
+            String newRefreshToken = jwtTokenProvider.createRefreshToken(authentication);
+
+            // 새로운 Refresh Token을 Redis에 저장
             redisTemplate.opsForValue().set(
                     "refresh:" + email,
                     newRefreshToken,
@@ -52,6 +60,11 @@ public class AuthService {
 
             response.setHeader("Authorization", "Bearer " + newAccessToken);
             response.setHeader("Refresh-Token", newRefreshToken);
+
+            ZonedDateTime now = ZonedDateTime.now(ZoneId.of("UTC"));
+            log.debug("Tokens refreshed at (UTC): {}", now);
+            log.debug("New access token expiration time (UTC): {}", jwtTokenProvider.getExpiration(newAccessToken));
+            log.debug("New refresh token expiration time (UTC): {}", jwtTokenProvider.getExpiration(newRefreshToken));
 
             return "Tokens refreshed successfully";
         }
