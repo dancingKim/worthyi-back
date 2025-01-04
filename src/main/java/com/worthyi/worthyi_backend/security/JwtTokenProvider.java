@@ -23,6 +23,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 
 @Slf4j
 public class JwtTokenProvider {
@@ -75,16 +76,15 @@ public class JwtTokenProvider {
         claims.put("roles", authorities);
         claims.put("userId", principalDetails.getUser().getUserId());
         
-        ZonedDateTime now = ZonedDateTime.now(ZoneId.of("UTC"));
-        ZonedDateTime expirationZonedDateTime = now.plus(Duration.ofMillis(tokenValidTime));
-        Date expirationDate = Date.from(expirationZonedDateTime.toInstant());
-
-        log.debug("Token creation time (UTC): {}", now);
-        log.debug("Token expiration time (UTC): {}", expirationZonedDateTime);
+        LocalDateTime now = LocalDateTime.now();
+        ZonedDateTime expirationTime = now.atZone(ZoneId.systemDefault())
+                                          .withZoneSameInstant(ZoneId.of("UTC"))
+                                          .plus(tokenValidTime / (60 * 1000), ChronoUnit.MINUTES);
+        Date expirationDate = Date.from(expirationTime.toInstant());
 
         String token = Jwts.builder()
                 .setClaims(claims)
-                .setIssuedAt(Date.from(now.toInstant()))
+                .setIssuedAt(Date.from(now.atZone(ZoneId.systemDefault()).toInstant()))
                 .setExpiration(expirationDate)
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
@@ -96,19 +96,17 @@ public class JwtTokenProvider {
 
     public String createRefreshToken(Authentication authentication) {
         PrincipalDetails principalDetails = (PrincipalDetails) authentication.getPrincipal();
-        ZonedDateTime now = ZonedDateTime.now(ZoneId.of("UTC"));
+        LocalDateTime now = LocalDateTime.now();
         String email = authentication.getName();
         Claims claims = Jwts.claims().setSubject(email);
         claims.put("userId", principalDetails.getUser().getUserId());
 
-        Date expirationDate = Date.from(now.plus(Duration.ofMillis(refreshTokenValidTime)).toInstant());
-
-        log.debug("Refresh token creation time (UTC): {}", now);
-        log.debug("Refresh token expiration time (UTC): {}", expirationDate);
+        LocalDateTime expirationTime = now.plus(refreshTokenValidTime / (60 * 1000), ChronoUnit.MINUTES);
+        Date expirationDate = Date.from(expirationTime.atZone(ZoneId.systemDefault()).toInstant());
 
         return Jwts.builder()
                 .setClaims(claims)
-                .setIssuedAt(Date.from(now.toInstant()))
+                .setIssuedAt(Date.from(now.atZone(ZoneId.systemDefault()).toInstant()))
                 .setExpiration(expirationDate)
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
