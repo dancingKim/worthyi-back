@@ -82,6 +82,9 @@ public class JwtTokenProvider {
                                           .plus(tokenValidTime / (60 * 1000), ChronoUnit.MINUTES);
         Date expirationDate = Date.from(expirationTime.toInstant());
 
+        log.debug("Token creation time (UTC): {}", now);
+        log.debug("Token expiration time (UTC): {}", expirationDate);
+
         String token = Jwts.builder()
                 .setClaims(claims)
                 .setIssuedAt(Date.from(now.atZone(ZoneId.systemDefault()).toInstant()))
@@ -106,6 +109,9 @@ public class JwtTokenProvider {
                                           .plus(refreshTokenValidTime / (60 * 1000), ChronoUnit.MINUTES);
         Date expirationDate = Date.from(expirationTime.toInstant());
 
+        log.debug("Refresh token creation time (UTC): {}", now);
+        log.debug("Refresh token expiration time (UTC): {}", expirationDate);
+
         return Jwts.builder()
                 .setClaims(claims)
                 .setIssuedAt(Date.from(now.atZone(ZoneId.systemDefault()).toInstant()))
@@ -114,18 +120,18 @@ public class JwtTokenProvider {
                 .compact();
     }
 
-    public String createRefreshToken(String email) {
-        Date now = new Date();
+    // public String createRefreshToken(String email) {
+    //     Date now = new Date();
 
-        Claims claims = Jwts.claims().setSubject(email);
+    //     Claims claims = Jwts.claims().setSubject(email);
 
-        return Jwts.builder()
-                .setClaims(claims)
-                .setIssuedAt(now)
-                .setExpiration(new Date(now.getTime() + refreshTokenValidTime))
-                .signWith(key, SignatureAlgorithm.HS256)
-                .compact();
-    }
+    //     return Jwts.builder()
+    //             .setClaims(claims)
+    //             .setIssuedAt(now)
+    //             .setExpiration(new Date(now.getTime() + refreshTokenValidTime))
+    //             .signWith(key, SignatureAlgorithm.HS256)
+    //             .compact();
+    // }
 
    public Authentication getAuthentication(String token) {
         log.info("=== Getting Authentication from Token ===");
