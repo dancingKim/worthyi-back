@@ -31,13 +31,13 @@ public class UserService {
     /**
      * 이메일을 기반으로 사용자의 권한 정보(GrantedAuthority)를 조회하는 메서드
      *
-     * @param email 사용자 이메일
+     * @param providerUserId 사용자 이메일
      * @return 사용자 권한 목록
      * @throws UsernameNotFoundException 사용자를 찾을 수 없을 때 발생
      */
-    public List<GrantedAuthority> getUserAuthoritiesByEmail(String email) {
+    public List<GrantedAuthority> getUserAuthoritiesByProviderUserId(String providerUserId) {
         // 1. 이메일로 사용자 정보 조회
-        Optional<User> userOptional = userRepository.findByEmail(email);
+        Optional<User> userOptional = userRepository.findByProviderUserId(providerUserId);
 
         // 2. 사용자 정보가 존재하는 경우
         if (userOptional.isPresent()) {
@@ -52,7 +52,7 @@ public class UserService {
                     .map(userRole -> new SimpleGrantedAuthority(userRole.getRole().getAuthorityName()))  // "ROLE_USER", "ROLE_ADMIN" 등
                     .collect(Collectors.toList());
         } else {
-            throw new UsernameNotFoundException("User not found with email: " + email);
+            throw new UsernameNotFoundException("User not found with providerUserId: " + providerUserId);
         }
     }
 
@@ -66,7 +66,7 @@ public class UserService {
                     return new IllegalArgumentException(ApiStatus.USER_NOT_FOUND.getMessage());
                 });
         
-        log.info("getUserInfo - Successfully found user: id={}, email={}", user.getUserId(), user.getEmail());
+        log.info("getUserInfo - Successfully found user: id={}, providerUserId={}", user.getUserId(), user.getProviderUserId());
         
         UserDto.Response response = UserDto.Response.from(user);
         log.info("getUserInfo - Successfully created response DTO for user: {}", response);

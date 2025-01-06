@@ -63,12 +63,23 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         OAuth2UserInfo oAuth2UserInfo = OAuth2UserInfo.of(registrationId, attributes);
         log.debug("OAuth2UserInfo created: {}", oAuth2UserInfo);
-
-        Optional<User> userOptional = userRepository.findByEmailWithRoles(oAuth2UserInfo.getEmail());
+        
+        Optional<User> userOptional = userRepository.findByProviderUserIdWithRoles(oAuth2UserInfo.getProviderUserId());
+        
         log.debug("Existing user check: {}", userOptional.isPresent() ? "found" : "not found");
 
         User user = userOptional.orElseGet(() -> {
-            log.info("Creating new user for email: {}", oAuth2UserInfo.getEmail());
+                String email = oAuth2UserInfo.getEmail();
+                if (email != null) {
+                        User oldUser = userRepository.findByProviderUserIdWithRoles(email).orElse(null);
+                        if (oldUser != null) {
+                                oldUser.setProviderUserId(oAuth2UserInfo.getProviderUserId());
+                                User updatedUser = userRepository.save(oldUser);
+                                return updatedUser;
+                        }
+                }
+
+            log.info("Creating new user for providerUserId: {}", oAuth2UserInfo.getProviderUserId());
             // 사용자 없을 시 신규 생성 후 저장
             User newUser = oAuth2UserInfo.toEntity();
             newUser.setUserRoles(new ArrayList<>());  // 빈 리스트로 초기화
@@ -141,6 +152,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         });
 
         log.info("=== OAuth2 User Loading End ===");
-        return new PrincipalDetails(user, attributes, "email");
+        return new PrincipalDetails(user, attributes, "providerUserId");
     }
 }

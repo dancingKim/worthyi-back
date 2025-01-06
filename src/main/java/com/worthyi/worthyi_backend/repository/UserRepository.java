@@ -10,12 +10,12 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
-    Optional<User> findByEmail(String email);
+    Optional<User> findByProviderUserId(String providerUserId);
 
-    @Query("SELECT u FROM User u LEFT JOIN FETCH u.userRoles ur LEFT JOIN FETCH ur.role WHERE u.email = :email")
-    Optional<User> findByEmailWithRoles(@Param("email") String email);
+    @Query("SELECT u FROM User u LEFT JOIN FETCH u.userRoles ur LEFT JOIN FETCH ur.role WHERE u.providerUserId = :providerUserId")
+    Optional<User> findByProviderUserIdWithRoles(@Param("providerUserId") String providerUserId);
 
-    boolean existsByEmail(String email);
+    boolean existsByPoviderUserId(String ProviderUserId);
 
     Optional<User> findByUserId(Long userId);
 

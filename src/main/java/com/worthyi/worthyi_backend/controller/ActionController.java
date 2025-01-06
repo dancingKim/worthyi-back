@@ -29,7 +29,7 @@ public class ActionController {
             @AuthenticationPrincipal PrincipalDetails principal) {
         log.info("=== Save Child Action Start ===");
         log.debug("Request payload: {}", request);
-        log.debug("User: id={}, email={}", principal.getUser().getUserId(), principal.getUsername());
+        log.debug("User: id={}, providerUserId={}", principal.getUser().getUserId(), principal.getUsername());
         
         ApiResponse<ActionDto.Response> response = actionService.saveChildAction(request, principal);
         
@@ -65,7 +65,7 @@ public class ActionController {
     ) {
         log.info("=== Get Child Actions By Date Start ===");
         log.debug("Requested date: {}", date);
-        log.debug("User: id={}, email={}", principal.getUser().getUserId(), principal.getUsername());
+        log.debug("User: id={}, providerUserId={}", principal.getUser().getUserId(), principal.getUsername());
         
         List<ActionDto.Response> responses = actionService.getChildActionsByDate(principal.getUser().getUserId(), date);
         
@@ -81,7 +81,7 @@ public class ActionController {
     ) {
         log.info("=== Get Action Logs Start ===");
         log.debug("Requested date: {}", date);
-        log.debug("User: id={}, email={}", principal.getUser().getUserId(), principal.getUsername());
+        log.debug("User: id={}, providerUserId={}", principal.getUser().getUserId(), principal.getUsername());
         
         ActionDto.ActionLogResponse result = actionService.getActionLogs(principal, date);
         
@@ -95,7 +95,7 @@ public class ActionController {
             @AuthenticationPrincipal PrincipalDetails principal) {
         log.info("=== Delete Child Action Start ===");
         log.debug("Action ID to delete: {}", id);
-        log.debug("User: id={}, email={}", principal.getUser().getUserId(), principal.getUsername());
+        log.debug("User: id={}, providerUserId={}", principal.getUser().getUserId(), principal.getUsername());
         
         actionService.deleteChildAction(id, principal.getUser().getUserId());
         

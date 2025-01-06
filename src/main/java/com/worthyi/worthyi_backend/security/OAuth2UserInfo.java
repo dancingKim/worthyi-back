@@ -14,38 +14,32 @@ public class OAuth2UserInfo {
     private String name;
     private String email;
     private String profile;
+    private String providerUserId;
 
     public static OAuth2UserInfo of(String registrationId, Map<String, Object> attributes) {
         return switch (registrationId) { // OAuth2 공급자별로 사용자 정보 생성
-            case "google" -> ofGoogle(attributes);
-            case "kakao" -> ofKakao(attributes);
+            case "google" -> ofGoogle(attributes, registrationId);
             default -> throw new IllegalStateException("Unexpected value: " + registrationId);
         };
     }
 
-    private static OAuth2UserInfo ofGoogle(Map<String, Object> attributes) {
+    private static OAuth2UserInfo ofGoogle(Map<String, Object> attributes, String registrationId) {
+        String providerUserId = registrationId + (String) attributes.getOrDefault("sub", "");
+        String name = (String) attributes.getOrDefault("name", "");
+        String email = (String) attributes.getOrDefault("email", "");
+        String profile = (String) attributes.getOrDefault("picture", "");
         return OAuth2UserInfo.builder()
-                .name((String) attributes.get("name"))
-                .email((String) attributes.get("email"))
-                .profile((String) attributes.get("picture"))
-                .build();
-    }
-
-    private static OAuth2UserInfo ofKakao(Map<String, Object> attributes) {
-        Map<String, Object> account = (Map<String, Object>) attributes.get("kakao_account");
-        Map<String, Object> profile = (Map<String, Object>) account.get("profile");
-
-        return OAuth2UserInfo.builder()
-                .name((String) profile.get("nickname"))
-                .email((String) account.get("email"))
-                .profile((String) profile.get("profile_image_url"))
+                .name(name)
+                .email(email)
+                .profile(profile)
+                .providerUserId(providerUserId)
                 .build();
     }
 
     public User toEntity() {
         return User.builder()
                 .username(name)
-                .email(email)
+                .providerUserId(providerUserId)
                 .authorities("ROLE_USER")
                 .build();
     }

@@ -27,8 +27,8 @@ public class User extends BaseEntity {
     @Column(name = "username", nullable = false, length = 50)
     private String username;
 
-    @Column(name = "email", nullable = false, length = 100, unique = true)
-    private String email;
+    @Column(name = "provider_user_id", nullable = false, length = 100, unique = true)
+    private String providerUserId;
 
     @Column(name = "authorities")
     private String authorities;
