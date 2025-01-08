@@ -9,6 +9,7 @@ import com.worthyi.worthyi_backend.repository.UserRoleRepository;
 import com.worthyi.worthyi_backend.security.OAuth2UserInfo;
 import com.worthyi.worthyi_backend.security.PrincipalDetails;
 import com.worthyi.worthyi_backend.model.entity.VillageInstance;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.worthyi.worthyi_backend.model.entity.Avatar;
 import com.worthyi.worthyi_backend.model.entity.PlaceInstance;
 import com.worthyi.worthyi_backend.repository.VillageTemplateRepository;
@@ -28,10 +29,15 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Base64;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -51,27 +57,31 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         log.info("=== OAuth2 User Loading Start ===");
+        OAuth2UserInfo oAuth2UserInfo;
+        Map<String, Object> attributes = new HashMap<>();
 
-        OAuth2User oAuth2User = super.loadUser(userRequest);
-        log.debug("OAuth2User loaded from provider: attributes={}", oAuth2User.getAttributes());
+        if (userRequest.getClientRegistration().getRegistrationId().equals("apple")) {
+            String idToken = userRequest.getAdditionalParameters().get("id_token").toString();
+            attributes.putAll(decodeJwtTokenPayload(idToken));
+            oAuth2UserInfo = OAuth2UserInfo.of("apple", attributes);
+        } else {
+            OAuth2User oAuth2User = super.loadUser(userRequest);
+            log.debug("OAuth2User loaded from provider: attributes={}", oAuth2User.getAttributes());
 
-        String registrationId = userRequest.getClientRegistration().getRegistrationId();
-        log.debug("OAuth2 provider: {}", registrationId);
+            String registrationId = userRequest.getClientRegistration().getRegistrationId();
+            log.debug("OAuth2 provider: {}", registrationId);
 
-        Map<String, Object> attributes = oAuth2User.getAttributes();
-        log.debug("OAuth2 attributes received: {}", attributes);
+            attributes.putAll(oAuth2User.getAttributes());
+            log.debug("OAuth2 attributes received: {}", attributes);
 
-        OAuth2UserInfo oAuth2UserInfo = OAuth2UserInfo.of(registrationId, attributes);
-        log.debug("OAuth2UserInfo created: {}", oAuth2UserInfo);
-        
+            oAuth2UserInfo = OAuth2UserInfo.of(registrationId, attributes);
+            log.debug("OAuth2UserInfo created: {}", oAuth2UserInfo);
+        }
+
         Optional<User> userOptional = userRepository.findByProviderAndSub(oAuth2UserInfo.getProvider(), oAuth2UserInfo.getSub());
-        // Optional<User> userOptional = userRepository.findByProviderUserIdWithRoles(oAuth2UserInfo.getProviderUserId());
-        
         log.debug("Existing user check: {}", userOptional.isPresent() ? "found" : "not found");
 
         User user = userOptional.orElseGet(() -> {
-
-            log.info("Creating new user for providerUserId: {}", oAuth2UserInfo.getSub());
             // 사용자 없을 시 신규 생성 후 저장
             User newUser = oAuth2UserInfo.toEntity();
             newUser.setUserRoles(new ArrayList<>());  // 빈 리스트로 초기화
@@ -149,5 +159,24 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         attributes.put("authorities", user.getAuthorities());
         log.info("=== OAuth2 User Loading End ===");
         return new PrincipalDetails(attributes, "userId");
+    }
+
+    public Map<String, Object> decodeJwtTokenPayload(String jwtToken) {
+        Map<String, Object> jwtClaims = new HashMap<>();
+        try {
+            String[] parts = jwtToken.split("\\.");
+            Base64.Decoder decoder = Base64.getUrlDecoder();
+
+            byte[] decodedBytes = decoder.decode(parts[1].getBytes(StandardCharsets.UTF_8));
+            String decodedString = new String(decodedBytes, StandardCharsets.UTF_8);
+            ObjectMapper mapper = new ObjectMapper();
+
+            Map<String, Object> map = mapper.readValue(decodedString, new TypeReference<Map<String, Object>>() {});
+            jwtClaims.putAll(map);
+
+        } catch (JsonProcessingException e) {
+            log.error("decodeJwtToken: {}-{} / jwtToken : {}", e.getMessage(), e.getCause(), jwtToken);
+        }
+        return jwtClaims;
     }
 }
