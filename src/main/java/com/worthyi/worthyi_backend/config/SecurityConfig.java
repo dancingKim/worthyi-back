@@ -1,6 +1,5 @@
 package com.worthyi.worthyi_backend.config;
 
-import com.worthyi.worthyi_backend.security.AppleProperties;
 import com.worthyi.worthyi_backend.security.CustomAuthenticationEntryPoint;
 import com.worthyi.worthyi_backend.security.CustomRequestEntityConverter;
 import com.worthyi.worthyi_backend.security.JwtAuthenticationFilter;
@@ -33,7 +32,6 @@ public class SecurityConfig {
 
     private final CustomOAuth2UserService oAuth2UserService;
     private final RedirectUrlCookieFilter redirectUrlCookieFilter;
-    private final AppleProperties appleProperties;
 
     @Bean
     public OAuth2AccessTokenResponseClient<OAuth2AuthorizationCodeGrantRequest> accessTokenResponseClient(CustomRequestEntityConverter customRequestEntityConverter) {
@@ -45,7 +43,7 @@ public class SecurityConfig {
 
     @Bean
     public CustomRequestEntityConverter customRequestEntityConverter() {
-        return new CustomRequestEntityConverter(appleProperties);
+        return new CustomRequestEntityConverter();
     }
 
     @Value("${JWT_SECRET_KEY}")

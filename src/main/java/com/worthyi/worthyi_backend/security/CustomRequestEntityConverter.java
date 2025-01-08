@@ -8,9 +8,7 @@ import org.springframework.core.convert.converter.Converter;
 import org.springframework.http.RequestEntity;
 import org.springframework.util.MultiValueMap;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.StringReader;
-import java.nio.charset.StandardCharsets;
 import java.security.PrivateKey;
 import java.util.HashMap;
 import java.util.Map;
@@ -20,26 +18,30 @@ import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import java.util.Date;
-import org.springframework.core.io.ClassPathResource;
-import org.apache.commons.io.IOUtils;
+import org.springframework.beans.factory.annotation.Value;
 
 @Getter
 @Component
 public class CustomRequestEntityConverter implements Converter<OAuth2AuthorizationCodeGrantRequest, RequestEntity<?>> {
     private final OAuth2AuthorizationCodeGrantRequestEntityConverter defaultConverter;
-    private final String path;
-    private final String keyId;
-    private final String teamId;
-    private final String clientId;
-    private final String url;
 
-    public CustomRequestEntityConverter(AppleProperties properties) {
+    @Value("${APPLE_KID}")
+    private String keyId;
+
+    @Value("${APPLE_TID}")
+    private String teamId;
+
+    @Value("${APPLE_CLIENT_ID}")
+    private String clientId;
+
+    @Value("${APPLE_CLIENT_SECRET}")
+    private String privateKeyContent;
+
+    @Value("${apple.url}")
+    private String url;
+
+    public CustomRequestEntityConverter() {
         this.defaultConverter = new OAuth2AuthorizationCodeGrantRequestEntityConverter();
-        this.path = properties.getPath();
-        this.keyId = properties.getKid();
-        this.teamId = properties.getTid();
-        this.clientId = properties.getCid();
-        this.url = properties.getUrl();
     }
 
     @Override
@@ -62,12 +64,11 @@ public class CustomRequestEntityConverter implements Converter<OAuth2Authorizati
     }
 
     public PrivateKey getPrivateKey() throws IOException {
-        ClassPathResource resource = new ClassPathResource(path);
-        InputStream in = resource.getInputStream();
-        PEMParser pemParser = new PEMParser(new StringReader(IOUtils.toString(in, StandardCharsets.UTF_8)));
-        PrivateKeyInfo object = (PrivateKeyInfo) pemParser.readObject();
-        JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
-        return converter.getPrivateKey(object);
+        try (PEMParser pemParser = new PEMParser(new StringReader(privateKeyContent))) {
+            PrivateKeyInfo object = (PrivateKeyInfo) pemParser.readObject();
+            JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
+            return converter.getPrivateKey(object);
+        }
     }
 
     public String createClientSecret() throws IOException {
