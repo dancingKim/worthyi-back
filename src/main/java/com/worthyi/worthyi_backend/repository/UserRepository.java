@@ -11,7 +11,7 @@ import java.util.UUID;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, UUID> {
-    Optional<User> findByProviderUserId(String providerUserId);
+    Optional<User> findBySub(String sub);
 
     @Query("SELECT u FROM User u LEFT JOIN FETCH u.userRoles ur LEFT JOIN FETCH ur.role WHERE u.sub = :sub")
     Optional<User> findByProviderUserIdWithRoles(@Param("sub") String sub);
