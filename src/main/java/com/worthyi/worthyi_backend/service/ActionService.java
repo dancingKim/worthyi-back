@@ -20,6 +20,7 @@ import java.time.DayOfWeek;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.UUID;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -38,12 +39,12 @@ public class ActionService {
     public ApiResponse<ActionDto.Response> saveChildAction(ActionDto.Request actionDto, PrincipalDetails user) {
         log.info("=== Processing Child Action Save ===");
         try {
-            Long userId = user.getUser().getUserId();
+            String userId = user.getName();
             log.debug("Processing for userId: {}", userId);
             
             // 1. User -> Avatar 조회
             log.debug("Searching for avatar with userId: {}", userId);
-            Avatar avatar = avatarRepository.findByUserUserId(userId)
+            Avatar avatar = avatarRepository.findByUserUserId(UUID.fromString(userId))
                     .orElseThrow(() -> {
                         log.error("Avatar not found for userId: {}", userId);
                         return new RuntimeException(ApiStatus.AVATAR_NOT_FOUND.getMessage());
@@ -52,7 +53,7 @@ public class ActionService {
             
             // 2. VillageInstance 조회
             log.debug("Fetching village for userId: {}", userId);
-            VillageInstance villageInstance = villageInstanceRepository.findByUserUserId(userId)
+            VillageInstance villageInstance = villageInstanceRepository.findByUserUserId(UUID.fromString(userId))
                     .orElseThrow(() -> {
                         log.error("Village not found for userId: {}", userId);
                         return new RuntimeException(ApiStatus.VILLAGE_NOT_FOUND.getMessage());
@@ -89,7 +90,7 @@ public class ActionService {
             Long childActionId, AdultActionDto.Request actionDto, PrincipalDetails principal) {
         log.info("=== Processing Adult Action Save ===");
         try {
-            Long userId = principal.getUser().getUserId();
+            String userId = principal.getName();
             log.debug("Processing adult action - ChildActionId: {}, UserId: {}", childActionId, userId);
             
             // 1. ChildAction 존재 여부 확인
@@ -112,7 +113,7 @@ public class ActionService {
             AdultActionInstance adultActionInstance = actionDto.toEntity(actionDto);
             adultActionInstance.setChildActionInstance(childActionInstance);
             adultActionInstance.setAdultActionTemplate(adultActionTemplate);
-            adultActionInstance.setUserId(userId);
+            adultActionInstance.setUserId(UUID.fromString(userId));
             log.debug("Created adult action instance: {}", adultActionInstance);
 
             // 4. 저장
@@ -128,12 +129,12 @@ public class ActionService {
     }
 
     // ActionService.java
-    public List<ActionDto.Response> getChildActionsByDate(Long userId, LocalDate date) {
+    public List<ActionDto.Response> getChildActionsByDate(String userId, LocalDate date) {
         log.info("=== Fetching Child Actions By Date ===");
         log.debug("UserId: {}, Date: {}", userId, date);
         
         try {
-            Avatar avatar = avatarRepository.findByUserUserId(userId)
+            Avatar avatar = avatarRepository.findByUserUserId(UUID.fromString(userId))
                     .orElseThrow(() -> {
                         log.error("Avatar not found for userId: {}", userId);
                         return new RuntimeException(ApiStatus.AVATAR_NOT_FOUND.getMessage());
@@ -158,10 +159,10 @@ public class ActionService {
     }
 
     public ActionDto.ActionLogResponse getActionLogs(PrincipalDetails principal, LocalDate date) {
-        Long userId = principal.getUser().getUserId();
+        String userId = principal.getName();
         
         // 1. Avatar 조회
-        Avatar avatar = avatarRepository.findByUserUserId(userId)
+        Avatar avatar = avatarRepository.findByUserUserId(UUID.fromString(userId))
                 .orElseThrow(() -> new RuntimeException("Avatar not found"));
 
         // 나머지 로직...
@@ -172,7 +173,7 @@ public class ActionService {
         LocalDate yearStart = date.withDayOfYear(1);
         LocalDate yearEnd = date.withDayOfYear(date.lengthOfYear());
 
-        List<ActionDto.DailyLog> dailyLogs = getChildActionsByDate(avatar.getAvatarId(), date).stream()
+        List<ActionDto.DailyLog> dailyLogs = getChildActionsByDate(userId, date).stream()
                 .map(action -> ActionDto.DailyLog.builder()
                         .date(date)
                         .actions(Collections.singletonList(action))
@@ -205,10 +206,10 @@ public class ActionService {
     }
 
     @Transactional
-    public ApiResponse<Void> deleteChildAction(Long childActionId, Long userId) {
+    public ApiResponse<Void> deleteChildAction(Long childActionId, String userId) {
         try {
             // 1. Avatar 조회
-            Avatar avatar = avatarRepository.findByUserUserId(userId)
+            Avatar avatar = avatarRepository.findByUserUserId(UUID.fromString(userId))
                     .orElseThrow(() -> new RuntimeException(ApiStatus.AVATAR_NOT_FOUND.getMessage()));
 
             // 2. ChildAction 조회 및 권한 확인
@@ -229,7 +230,7 @@ public class ActionService {
     }
 
     @Transactional
-    public ApiResponse<Void> deleteAdultAction(Long childActionId, Long adultActionId, Long userId) {
+    public ApiResponse<Void> deleteAdultAction(Long childActionId, Long adultActionId, String userId) {
         log.info("=== Processing Adult Action Delete Request ===");
         log.debug("Delete request - ChildActionId: {}, AdultActionId: {}, UserId: {}", 
             childActionId, adultActionId, userId);
@@ -258,7 +259,7 @@ public class ActionService {
             }
 
             // 4. 권한 확인
-            if (!adultAction.getUserId().equals(userId)) {
+            if (!adultAction.getUserId().equals(UUID.fromString(userId))) {
                 log.warn("User {} not authorized to delete adult action {}", userId, adultActionId);
                 return ApiResponse.error(ApiStatus.NOT_AUTHORIZED_TO_DELETE);
             }

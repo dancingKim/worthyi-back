@@ -11,35 +11,35 @@ import java.util.Map;
 @Getter
 @ToString
 public class OAuth2UserInfo {
-    private String name;
-    private String email;
-    private String profile;
-    private String providerUserId;
+    private String provider;
+    private String sub;
 
     public static OAuth2UserInfo of(String registrationId, Map<String, Object> attributes) {
         return switch (registrationId) { // OAuth2 공급자별로 사용자 정보 생성
-            case "google" -> ofGoogle(attributes, registrationId);
+            case "google" -> ofGoogle(registrationId, attributes);
+            case "apple" -> ofApple(registrationId, attributes);
             default -> throw new IllegalStateException("Unexpected value: " + registrationId);
         };
     }
 
-    private static OAuth2UserInfo ofGoogle(Map<String, Object> attributes, String registrationId) {
-        String providerUserId = registrationId + (String) attributes.getOrDefault("sub", "");
-        String name = (String) attributes.getOrDefault("name", "");
-        String email = (String) attributes.getOrDefault("email", "");
-        String profile = (String) attributes.getOrDefault("picture", "");
+    private static OAuth2UserInfo ofGoogle(String registrationId, Map<String, Object> attributes) {
         return OAuth2UserInfo.builder()
-                .name(name)
-                .email(email)
-                .profile(profile)
-                .providerUserId(providerUserId)
+                .provider(registrationId)
+                .sub((String) attributes.get("sub"))
+                .build();
+    }
+
+    private static OAuth2UserInfo ofApple(String registrationId, Map<String, Object> attributes) {
+        return OAuth2UserInfo.builder()
+                .provider(registrationId)
+                .sub((String) attributes.get("sub"))
                 .build();
     }
 
     public User toEntity() {
         return User.builder()
-                .username(name)
-                .providerUserId(providerUserId)
+                .provider(provider)
+                .sub(sub)
                 .authorities("ROLE_USER")
                 .build();
     }

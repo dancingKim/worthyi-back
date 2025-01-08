@@ -38,15 +38,15 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
         log.debug("Creating JWT token for authenticated user: {}", authentication.getName());
         String jwtToken = jwtTokenProvider.createToken(authentication);
         
-        String providerUserId = jwtTokenProvider.getProviderUserIdFromToken(jwtToken);
-        log.debug("ProviderUserId extracted from token: {}", providerUserId);
+        String userId = jwtTokenProvider.getUserIdFromToken(jwtToken);
+        log.debug("Email extracted from token: {}", userId);
 
         log.debug("Creating refresh token");
         String refreshToken = jwtTokenProvider.createRefreshToken(authentication);
 
         log.info("Saving refresh token to Redis");
         long refreshTokenValidTime = jwtTokenProvider.getRefreshTokenValidTime();
-        redisTemplate.opsForValue().set("refresh:" + providerUserId, refreshToken, refreshTokenValidTime, TimeUnit.MILLISECONDS);
+        redisTemplate.opsForValue().set("refresh:" + userId, refreshToken, refreshTokenValidTime, TimeUnit.MILLISECONDS);
 
         log.debug("Refresh token valid time (ms): {}", refreshTokenValidTime);
         log.debug("Refresh token will expire at (UTC): {}", ZonedDateTime.now(ZoneId.of("UTC")).plus(Duration.ofMillis(refreshTokenValidTime)));

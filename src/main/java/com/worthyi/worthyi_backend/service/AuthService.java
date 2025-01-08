@@ -24,11 +24,11 @@ public class AuthService {
     private final UserService userService;
 
     public void logout(String accessToken) {
-        String providerUserId = jwtTokenProvider.getProviderUserIdFromToken(accessToken);
+        String userId = jwtTokenProvider.getUserIdFromToken(accessToken);
 
         // Redis에서 Refresh Token 삭제
-        redisTemplate.delete("refresh:" + providerUserId);
-        log.info("Refresh token deleted for providerUserId: {}", providerUserId);
+        redisTemplate.delete("refresh:" + userId);
+        log.info("Refresh token deleted for userId: {}", userId);
 
         // Access Token을 블랙리스트 처리하여 만료될 때까지 유효하지 않도록 설정
         long expiration = jwtTokenProvider.getExpiration(accessToken) - System.currentTimeMillis();
@@ -40,19 +40,19 @@ public class AuthService {
     }
 
     public String refreshTokens(String refreshToken, HttpServletResponse response) {
-        String providerUserId = jwtTokenProvider.getProviderUserIdFromToken(refreshToken);
-        String redisRefreshToken = redisTemplate.opsForValue().get("refresh:" + providerUserId);
+        String userId = jwtTokenProvider.getUserIdFromToken(refreshToken);
+        String redisRefreshToken = redisTemplate.opsForValue().get("refresh:" + userId);
 
         Authentication authentication = jwtTokenProvider.getAuthentication(refreshToken);
 
         if (redisRefreshToken != null && redisRefreshToken.equals(refreshToken)) {
-            List<GrantedAuthority> authorities = userService.getUserAuthoritiesByProviderUserId(providerUserId);
+            List<GrantedAuthority> authorities = userService.getUserAuthoritiesByUserId(userId);
             String newAccessToken = jwtTokenProvider.createToken(authentication, authorities);
             String newRefreshToken = jwtTokenProvider.createRefreshToken(authentication);
 
             // 새로운 Refresh Token을 Redis에 저장
             redisTemplate.opsForValue().set(
-                    "refresh:" + providerUserId,
+                    "refresh:" + userId,
                     newRefreshToken,
                     jwtTokenProvider.getRefreshTokenValidTime(),
                     TimeUnit.MILLISECONDS

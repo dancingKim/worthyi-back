@@ -64,22 +64,14 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         OAuth2UserInfo oAuth2UserInfo = OAuth2UserInfo.of(registrationId, attributes);
         log.debug("OAuth2UserInfo created: {}", oAuth2UserInfo);
         
-        Optional<User> userOptional = userRepository.findByProviderUserIdWithRoles(oAuth2UserInfo.getProviderUserId());
+        Optional<User> userOptional = userRepository.findByProviderAndSub(oAuth2UserInfo.getProvider(), oAuth2UserInfo.getSub());
+        // Optional<User> userOptional = userRepository.findByProviderUserIdWithRoles(oAuth2UserInfo.getProviderUserId());
         
         log.debug("Existing user check: {}", userOptional.isPresent() ? "found" : "not found");
 
         User user = userOptional.orElseGet(() -> {
-                String email = oAuth2UserInfo.getEmail();
-                if (email != null) {
-                        User oldUser = userRepository.findByProviderUserIdWithRoles(email).orElse(null);
-                        if (oldUser != null) {
-                                oldUser.setProviderUserId(oAuth2UserInfo.getProviderUserId());
-                                User updatedUser = userRepository.save(oldUser);
-                                return updatedUser;
-                        }
-                }
 
-            log.info("Creating new user for providerUserId: {}", oAuth2UserInfo.getProviderUserId());
+            log.info("Creating new user for providerUserId: {}", oAuth2UserInfo.getSub());
             // 사용자 없을 시 신규 생성 후 저장
             User newUser = oAuth2UserInfo.toEntity();
             newUser.setUserRoles(new ArrayList<>());  // 빈 리스트로 초기화
@@ -107,7 +99,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             VillageInstance villageInstance = VillageInstance.builder()
                     .user(savedUser)
                     .villageTemplate(villageTemplateRepository.findById(1L).orElseThrow())
-                    .name(savedUser.getUsername() + "의 마을")
+                    .name(savedUser.getUserId().toString() + "의 마을")
                     .description("새로 만들어진 마을입니다.")
                     .createdAt(LocalDateTime.now())
                     .updatedAt(LocalDateTime.now())
@@ -117,7 +109,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             // Avatar 생성
             Avatar avatar = Avatar.builder()
                     .user(savedUser)
-                    .name(savedUser.getUsername() + "의 아바타")
+                    .name(savedUser.getSub() + "의 아바타")
                     .createdAt(LocalDateTime.now())
                     .updatedAt(LocalDateTime.now())
                     .build();
@@ -151,7 +143,11 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             return savedUser;
         });
 
+        attributes.put("userId", user.getUserId().toString());
+        attributes.put("provider", user.getProvider());
+        attributes.put("sub", user.getSub());
+        attributes.put("authorities", user.getAuthorities());
         log.info("=== OAuth2 User Loading End ===");
-        return new PrincipalDetails(user, attributes, "providerUserId");
+        return new PrincipalDetails(user, attributes, "userId");
     }
 }

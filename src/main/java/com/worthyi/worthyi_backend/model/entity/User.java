@@ -8,6 +8,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.UUID;
 
 @ToString
 @Entity
@@ -20,17 +21,17 @@ import java.util.ArrayList;
 public class User extends BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "user_id")
-    private Long userId;
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "user_id", columnDefinition = "uuid", unique = true)
+    private UUID userId;
 
-    @Column(name = "username", nullable = false, length = 50)
-    private String username;
+    @Column(name = "sub", nullable = false, length = 100, unique = true)
+    private String sub;
 
-    @Column(name = "provider_user_id", nullable = false, length = 100, unique = true)
-    private String providerUserId;
+    @Column(name = "provider", nullable = false, length = 50, columnDefinition = "varchar(50) default 'google'")
+    private String provider;
 
-    @Column(name = "authorities")
+    @Column(name = "authorities", length = 255, columnDefinition = "varchar(255) default 'user'")
     private String authorities;
 
     @CreationTimestamp
