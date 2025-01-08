@@ -142,8 +142,7 @@ public class JwtTokenProvider {
         String userId = claims.getSubject();
         log.debug("User details from token: userId={}", userId);
 
-        User user = User.builder().userId(UUID.fromString(userId)).build();
-        PrincipalDetails principal = new PrincipalDetails(user, Map.of(
+        PrincipalDetails principal = new PrincipalDetails( Map.of(
                 "userId", userId
         ), "userId");
 
