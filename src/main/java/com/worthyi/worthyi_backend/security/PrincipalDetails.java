@@ -15,25 +15,23 @@ import java.util.stream.Collectors;
 @Getter
 public class PrincipalDetails implements OAuth2User, UserDetails {
 
-    private final User user;
     private final Map<String, Object> attributes;
     private final String attributeKey;
 
     public PrincipalDetails(User user, Map<String, Object> attributes, String attributeKey) {
-        this.user = user;
         this.attributes = attributes;
         this.attributeKey = attributeKey;
     }
 
     @Override
     public String getUsername() {
-        return user.getEmail();
+        return (String) attributes.get("userId");
     }
 
     @Override
     public String getName() {
-        Object attr = attributes.get(attributeKey);
-        return attr != null ? attr.toString() : user.getUsername(); // Fallback to username if attribute is null
+        String attr = (String) attributes.get(attributeKey);
+        return attr.toString(); // Fallback to username if attribute is null
     }
 
     @Override
@@ -49,13 +47,15 @@ public class PrincipalDetails implements OAuth2User, UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         // userRoles가 null일 경우 빈 리스트 반환
-        if (user.getUserRoles() == null) {
+        String roles = (String) attributes.get("authorities");
+        if (roles == null || roles.isEmpty()) {
             return Collections.emptyList();
         }
 
-        return user.getUserRoles().stream()
-                .map(userRole -> new SimpleGrantedAuthority(userRole.getRole().getAuthorityName()))
+        return java.util.Arrays.stream(roles.split(","))
+                .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());
+
     }
 
     @Override

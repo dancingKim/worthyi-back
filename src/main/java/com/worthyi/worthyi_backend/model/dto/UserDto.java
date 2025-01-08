@@ -39,8 +39,8 @@ public class UserDto {
         
         public static Response from(User user) {
             return Response.builder()
-                .email(user.getEmail())
-                .name(user.getUsername())
+                .email("")
+                .name("") 
                 .avatars(user.getAvatars().stream()
                     .map(AvatarResponse::from)
                     .collect(Collectors.toList()))

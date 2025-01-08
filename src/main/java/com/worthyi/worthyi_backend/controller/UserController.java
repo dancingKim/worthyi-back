@@ -21,7 +21,7 @@ public class UserController {
 
     @GetMapping("/me")
     public ApiResponse<UserDto.Response> getUserInfo(@AuthenticationPrincipal PrincipalDetails principal) {
-        Long userId = principal.getUser().getUserId();
+        String userId = principal.getName();
         log.info("GET /user/me - Requesting user information for userId: {}", userId);
         
         UserDto.Response response = userService.getUserInfo(userId);

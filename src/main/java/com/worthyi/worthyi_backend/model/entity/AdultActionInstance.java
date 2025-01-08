@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+import java.util.UUID;
 
 @Builder
 @NoArgsConstructor
@@ -25,7 +26,7 @@ public class AdultActionInstance extends BaseEntity {
     @JoinColumn(name = "child_action_instance_id", nullable = false)
     private ChildActionInstance childActionInstance;
 
-    private Long userId;
+    private UUID userId;
 
     @Column(columnDefinition = "jsonb")
     @JdbcTypeCode(SqlTypes.JSON)

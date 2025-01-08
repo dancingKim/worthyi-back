@@ -62,19 +62,17 @@ public class JwtTokenProvider {
         log.info("=== Creating JWT Token with Roles ===");
         
         PrincipalDetails principalDetails = (PrincipalDetails) authentication.getPrincipal();
-        log.debug("Principal details: userId={}, email={}", 
-            principalDetails.getUser().getUserId(), 
-            principalDetails.getUsername());
+        log.debug("Principal details: userId", 
+            principalDetails.getName());
 
-        String email = authentication.getName();
+        String userId = principalDetails.getName();
         String authorities = roles.stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
         log.debug("Authorities to be included in token: {}", authorities);
 
-        Claims claims = Jwts.claims().setSubject(email);
+        Claims claims = Jwts.claims().setSubject(userId);
         claims.put("roles", authorities);
-        claims.put("userId", principalDetails.getUser().getUserId());
         
         LocalDateTime now = LocalDateTime.now();
         ZonedDateTime expirationTime = now.atZone(ZoneId.systemDefault())
@@ -100,9 +98,8 @@ public class JwtTokenProvider {
     public String createRefreshToken(Authentication authentication) {
         PrincipalDetails principalDetails = (PrincipalDetails) authentication.getPrincipal();
         LocalDateTime now = LocalDateTime.now();
-        String email = authentication.getName();
-        Claims claims = Jwts.claims().setSubject(email);
-        claims.put("userId", principalDetails.getUser().getUserId());
+        String userId = principalDetails.getName();
+        Claims claims = Jwts.claims().setSubject(userId);
 
         ZonedDateTime expirationTime = now.atZone(ZoneId.systemDefault())
                                           .withZoneSameInstant(ZoneId.of("UTC"))
@@ -142,15 +139,13 @@ public class JwtTokenProvider {
         List<SimpleGrantedAuthority> authorities = getAuthorities(claims);
         log.debug("Authorities parsed from token: {}", authorities);
 
-        Long userId = claims.get("userId", Long.class);
-        String email = claims.getSubject();
-        log.debug("User details from token: userId={}, email={}", userId, email);
+        String userId = claims.getSubject();
+        log.debug("User details from token: userId={}", userId);
 
-        User user = User.builder().userId(userId).build();
+        User user = User.builder().userId(UUID.fromString(userId)).build();
         PrincipalDetails principal = new PrincipalDetails(user, Map.of(
-                "email", email,
                 "userId", userId
-        ), "email");
+        ), "userId");
 
         Authentication authentication = new UsernamePasswordAuthenticationToken(principal, token, authorities);
         log.info("Authentication object created successfully");
@@ -196,7 +191,7 @@ public class JwtTokenProvider {
         return authorities;
     }
 
-    public String getEmailFromToken(String token) {
+    public String getUserIdFromToken(String token) {
         Claims claims = parseClaims(token);
         return claims.getSubject();
     }

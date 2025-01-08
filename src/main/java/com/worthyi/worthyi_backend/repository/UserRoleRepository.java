@@ -4,9 +4,10 @@ import com.worthyi.worthyi_backend.model.entity.UserRole;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface UserRoleRepository extends JpaRepository<UserRole, Long> {
 
     // 사용자의 ID를 기반으로 역할 목록 조회
-    List<UserRole> findByUser_UserId(Long userId);
+    List<UserRole> findByUser_UserId(UUID userId);
 }
