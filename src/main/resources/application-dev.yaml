@@ -13,10 +13,12 @@ spring:
             authorization-grant-type: authorization_code # OAuth2 인증 코드 그랜트 타입
             client-authentication-method: post # 클라이언트 인증 방법
           google:
-            client-id: ${GOOGLE_CLIENT_ID} # Google OAuth2 클라이언트 ID
-            client-secret: ${GOOGLE_CLIENT_SECRET} # Google OAuth2 클라이언트 비밀
-            scope: sub, email, profile # Google에서 요청할 범위
-            redirect-uri: "https://api-dev.worthyilife.com/login/oauth2/code/{registrationId}" # Google OAuth2 리디렉션 URI
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            redirect-uri: "https://api-dev.worthyilife.com/login/oauth2/code/google"
+            scope:
+              - email
+              - profile
         provider:
           apple:
             authorization-uri: https://appleid.apple.com/auth/authorize
