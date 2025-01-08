@@ -33,7 +33,8 @@ public class SecurityConfig {
 
     private final CustomOAuth2UserService oAuth2UserService;
     private final RedirectUrlCookieFilter redirectUrlCookieFilter;
-      private final AppleProperties appleProperties;
+    private final AppleProperties appleProperties;
+
     @Bean
     public OAuth2AccessTokenResponseClient<OAuth2AuthorizationCodeGrantRequest> accessTokenResponseClient(CustomRequestEntityConverter customRequestEntityConverter) {
         DefaultAuthorizationCodeTokenResponseClient accessTokenResponseClient = new DefaultAuthorizationCodeTokenResponseClient();
@@ -41,6 +42,7 @@ public class SecurityConfig {
 
         return accessTokenResponseClient;
     }
+
     @Bean
     public CustomRequestEntityConverter customRequestEntityConverter() {
         return new CustomRequestEntityConverter(appleProperties);
@@ -119,7 +121,7 @@ public class SecurityConfig {
         configuration.addAllowedOrigin("http://localhost:3000"); // 웹용
         configuration.addAllowedOrigin("http://192.168.0.6:8081"); // Metro Bundler를 사용하는 React Native 앱
         configuration.addAllowedOrigin("http://10.0.2.2:8081"); // Android 에뮬레이터용
-        configuration.addAllowedOriginPattern("*"); // 모든 요청 허용 (배포 환경에서는 주의
+        configuration.addAllowedOriginPattern("*"); // 모든 요청 허용 (배포 환경에서는 주의)
 
         configuration.addAllowedMethod("*");
         configuration.addAllowedHeader("*");

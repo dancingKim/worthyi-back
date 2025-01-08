@@ -82,13 +82,11 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         log.debug("Existing user check: {}", userOptional.isPresent() ? "found" : "not found");
 
         User user = userOptional.orElseGet(() -> {
-            // 사용자 없을 시 신규 생성 후 저장
             User newUser = oAuth2UserInfo.toEntity();
-            newUser.setUserRoles(new ArrayList<>());  // 빈 리스트로 초기화
+            newUser.setUserRoles(new ArrayList<>());
             User savedUser = userRepository.save(newUser);
             log.info("New user created: {}", savedUser);
 
-            // 역할 설정
             Role userRole = roleRepository.findByAuthorityName("ROLE_USER")
                     .orElseGet(() -> {
                         Role role = Role.builder()
@@ -97,15 +95,13 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                         return roleRepository.save(role);
                     });
 
-            // UserRole 엔티티 생성 및 저장
             UserRole userRoleEntity = UserRole.builder()
                     .user(savedUser)
                     .role(userRole)
                     .build();
             userRoleRepository.save(userRoleEntity);
-            savedUser.getUserRoles().add(userRoleEntity);  // 생성된 UserRole 추가
+            savedUser.getUserRoles().add(userRoleEntity);
 
-            // VillageInstance 생성
             VillageInstance villageInstance = VillageInstance.builder()
                     .user(savedUser)
                     .villageTemplate(villageTemplateRepository.findById(1L).orElseThrow())
@@ -116,7 +112,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     .build();
             villageInstanceRepository.save(villageInstance);
 
-            // Avatar 생성
             Avatar avatar = Avatar.builder()
                     .user(savedUser)
                     .name(savedUser.getSub() + "의 아바타")
@@ -125,7 +120,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     .build();
             avatarRepository.save(avatar);
 
-            // PlaceInstance 생성
             PlaceInstance placeInstance = PlaceInstance.builder()
                     .placeTemplate(placeTemplateRepository.findById(1L).orElseThrow())
                     .villageInstance(villageInstance)
@@ -134,18 +128,16 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     .build();
             placeInstanceRepository.save(placeInstance);
 
-            // 예) CustomOAuth2UserService.loadUser() 안에 추가
             AvatarInVillageId avatarInVillageId = new AvatarInVillageId(
                     avatar.getAvatarId(),
                     villageInstance.getVillageId());
 
             AvatarInVillage avatarInVillage = AvatarInVillage.builder()
-                    .id(avatarInVillageId) // 복합 키 설정
-                    .avatar(avatar) // @MapsId("avatarId") 부분
-                    .villageInstance(villageInstance) // @MapsId("villageId") 부분
+                    .id(avatarInVillageId)
+                    .avatar(avatar)
+                    .villageInstance(villageInstance)
                     .build();
 
-            // 이제 복합 키가 직접 세팅됐으므로 충돌 없이 저장 가능
             avatarInVillageRepository.save(avatarInVillage);
             log.info("Created instances - Village: {}, Avatar: {}, Place: {}, AvatarInVillage: {}",
                     villageInstance, avatar, placeInstance, avatarInVillage);

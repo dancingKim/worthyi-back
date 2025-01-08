@@ -1,6 +1,5 @@
 package com.worthyi.worthyi_backend.security;
 
-
 import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequestEntityConverter;
 import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequest;
 import lombok.Getter;
@@ -42,6 +41,7 @@ public class CustomRequestEntityConverter implements Converter<OAuth2Authorizati
         this.clientId = properties.getCid();
         this.url = properties.getUrl();
     }
+
     @Override
     public RequestEntity<?> convert(OAuth2AuthorizationCodeGrantRequest req) {
         RequestEntity<?> entity = defaultConverter.convert(req);
@@ -60,10 +60,9 @@ public class CustomRequestEntityConverter implements Converter<OAuth2Authorizati
         }
         return entity;
     }
+
     public PrivateKey getPrivateKey() throws IOException {
-
         ClassPathResource resource = new ClassPathResource(path);
-
         InputStream in = resource.getInputStream();
         PEMParser pemParser = new PEMParser(new StringReader(IOUtils.toString(in, StandardCharsets.UTF_8)));
         PrivateKeyInfo object = (PrivateKeyInfo) pemParser.readObject();
@@ -79,8 +78,8 @@ public class CustomRequestEntityConverter implements Converter<OAuth2Authorizati
         return Jwts.builder()
                 .setHeaderParams(jwtHeader)
                 .setIssuer(teamId)
-                .setIssuedAt(new Date(System.currentTimeMillis())) // 발행 시간 - UNIX 시간
-                .setExpiration(new Date(System.currentTimeMillis() + (1000 * 60 * 5)))// 만료 시간
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + (1000 * 60 * 5)))
                 .setAudience(url)
                 .setSubject(clientId)
                 .signWith(getPrivateKey(), SignatureAlgorithm.ES256)
