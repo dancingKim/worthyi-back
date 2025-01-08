@@ -13,8 +13,8 @@ import java.util.UUID;
 public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByProviderUserId(String providerUserId);
 
-    @Query("SELECT u FROM User u LEFT JOIN FETCH u.userRoles ur LEFT JOIN FETCH ur.role WHERE u.providerUserId = :providerUserId")
-    Optional<User> findByProviderUserIdWithRoles(@Param("providerUserId") String providerUserId);
+    @Query("SELECT u FROM User u LEFT JOIN FETCH u.userRoles ur LEFT JOIN FETCH ur.role WHERE u.sub = :sub")
+    Optional<User> findByProviderUserIdWithRoles(@Param("sub") String sub);
 
     // boolean existsByPoviderUserId(String ProviderUserId);
 
@@ -23,5 +23,6 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     @Query("SELECT u FROM User u LEFT JOIN FETCH u.avatars WHERE u.userId = :userId")
     Optional<User> findByUserIdWithAvatars(@Param("userId") UUID userId);
 
-    Optional<User> findByProviderAndSub(String provider, String sub);
+    @Query("SELECT u FROM User u LEFT JOIN FETCH u.userRoles ur LEFT JOIN FETCH ur.role WHERE u.provider = :provider AND u.sub = :sub")
+    Optional<User> findByProviderAndSub(@Param("provider") String provider, @Param("sub") String sub);
 }

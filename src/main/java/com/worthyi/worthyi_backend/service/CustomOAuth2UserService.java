@@ -148,6 +148,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         attributes.put("sub", user.getSub());
         attributes.put("authorities", user.getAuthorities());
         log.info("=== OAuth2 User Loading End ===");
-        return new PrincipalDetails(user, attributes, "userId");
+        return new PrincipalDetails(attributes, "userId");
     }
 }
