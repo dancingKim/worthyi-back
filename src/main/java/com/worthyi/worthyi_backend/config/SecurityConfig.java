@@ -1,6 +1,7 @@
 package com.worthyi.worthyi_backend.config;
 
 import com.worthyi.worthyi_backend.security.CustomAuthenticationEntryPoint;
+import com.worthyi.worthyi_backend.security.CustomRequestEntityConverter;
 import com.worthyi.worthyi_backend.security.JwtAuthenticationFilter;
 import com.worthyi.worthyi_backend.security.JwtTokenProvider;
 import com.worthyi.worthyi_backend.security.OAuth2AuthenticationSuccessHandler;
@@ -15,6 +16,9 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.client.endpoint.DefaultAuthorizationCodeTokenResponseClient;
+import org.springframework.security.oauth2.client.endpoint.OAuth2AccessTokenResponseClient;
+import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequest;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -28,6 +32,19 @@ public class SecurityConfig {
 
     private final CustomOAuth2UserService oAuth2UserService;
     private final RedirectUrlCookieFilter redirectUrlCookieFilter;
+
+    @Bean
+    public OAuth2AccessTokenResponseClient<OAuth2AuthorizationCodeGrantRequest> accessTokenResponseClient(CustomRequestEntityConverter customRequestEntityConverter) {
+        DefaultAuthorizationCodeTokenResponseClient accessTokenResponseClient = new DefaultAuthorizationCodeTokenResponseClient();
+        accessTokenResponseClient.setRequestEntityConverter(customRequestEntityConverter);
+
+        return accessTokenResponseClient;
+    }
+
+    @Bean
+    public CustomRequestEntityConverter customRequestEntityConverter() {
+        return new CustomRequestEntityConverter();
+    }
 
     @Value("${JWT_SECRET_KEY}")
     private String secretKey;
@@ -58,6 +75,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
+                        .tokenEndpoint(token -> token.accessTokenResponseClient(accessTokenResponseClient(customRequestEntityConverter())))
                         .userInfoEndpoint(userInfo -> userInfo.userService(oAuth2UserService))
                         .successHandler(oAuth2AuthenticationSuccessHandler)
                 )
@@ -101,7 +119,7 @@ public class SecurityConfig {
         configuration.addAllowedOrigin("http://localhost:3000"); // 웹용
         configuration.addAllowedOrigin("http://192.168.0.6:8081"); // Metro Bundler를 사용하는 React Native 앱
         configuration.addAllowedOrigin("http://10.0.2.2:8081"); // Android 에뮬레이터용
-        configuration.addAllowedOriginPattern("*"); // 모든 요청 허용 (배포 환경에서는 주의
+        configuration.addAllowedOriginPattern("*"); // 모든 요청 허용 (배포 환경에서는 주의)
 
         configuration.addAllowedMethod("*");
         configuration.addAllowedHeader("*");
