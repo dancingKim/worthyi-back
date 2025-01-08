@@ -61,9 +61,13 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         Map<String, Object> attributes = new HashMap<>();
 
         if (userRequest.getClientRegistration().getRegistrationId().equals("apple")) {
+            log.debug("Processing Apple OAuth2 login");
             String idToken = userRequest.getAdditionalParameters().get("id_token").toString();
+            log.debug("Received idToken: {}", idToken);
             attributes.putAll(decodeJwtTokenPayload(idToken));
+            log.debug("Decoded attributes: {}", attributes);
             oAuth2UserInfo = OAuth2UserInfo.of("apple", attributes);
+            log.debug("OAuth2UserInfo created: {}", oAuth2UserInfo);
         } else {
             OAuth2User oAuth2User = super.loadUser(userRequest);
             log.debug("OAuth2User loaded from provider: attributes={}", oAuth2User.getAttributes());
@@ -82,6 +86,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         log.debug("Existing user check: {}", userOptional.isPresent() ? "found" : "not found");
 
         User user = userOptional.orElseGet(() -> {
+            log.debug("Creating new user for provider: {}", oAuth2UserInfo.getProvider());
             User newUser = oAuth2UserInfo.toEntity();
             newUser.setUserRoles(new ArrayList<>());
             User savedUser = userRepository.save(newUser);
@@ -154,6 +159,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     }
 
     public Map<String, Object> decodeJwtTokenPayload(String jwtToken) {
+        log.debug("Decoding JWT token payload");
         Map<String, Object> jwtClaims = new HashMap<>();
         try {
             String[] parts = jwtToken.split("\\.");
@@ -165,9 +171,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
             Map<String, Object> map = mapper.readValue(decodedString, new TypeReference<Map<String, Object>>() {});
             jwtClaims.putAll(map);
+            log.debug("JWT claims decoded: {}", jwtClaims);
 
         } catch (JsonProcessingException e) {
-            log.error("decodeJwtToken: {}-{} / jwtToken : {}", e.getMessage(), e.getCause(), jwtToken);
+            log.error("Error decoding JWT token: {}", e.getMessage());
         }
         return jwtClaims;
     }
