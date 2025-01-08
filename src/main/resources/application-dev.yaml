@@ -5,12 +5,23 @@ spring:
     oauth2:
       client:
         registration:
-          google:
+          apple:
+            provider: apple
+            client-id: ${APPLE_OAUTH2_KEY_ID}
+            client-secret: ${APPLE_OAUTH2_SECRET}
+            scope: name email
             redirect-uri: "https://api-dev.worthyilife.com/login/oauth2/code/{registrationId}"
+          google:
             client-id: ${GOOGLE_CLIENT_ID}
             client-secret: ${GOOGLE_CLIENT_SECRET}
             scope: email, profile
+            redirect-uri: "https://api-dev.worthyilife.com/login/oauth2/code/{registrationId}"
         provider:
+          apple:
+            authorization-uri: https://appleid.apple.com/auth/authorize
+            token-uri: https://appleid.apple.com/auth/token
+            jwk-set-uri: https://appleid.apple.com/auth/keys
+            user-name-attribute: sub
           google:
             authorization-uri: https://accounts.google.com/o/oauth2/v2/auth
             token-uri: https://oauth2.googleapis.com/token
