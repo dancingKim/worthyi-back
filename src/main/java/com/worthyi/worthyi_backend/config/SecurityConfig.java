@@ -24,11 +24,15 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
+
+    private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
 
     private final CustomOAuth2UserService oAuth2UserService;
     private final RedirectUrlCookieFilter redirectUrlCookieFilter;
@@ -37,13 +41,15 @@ public class SecurityConfig {
     public OAuth2AccessTokenResponseClient<OAuth2AuthorizationCodeGrantRequest> accessTokenResponseClient(CustomRequestEntityConverter customRequestEntityConverter) {
         DefaultAuthorizationCodeTokenResponseClient accessTokenResponseClient = new DefaultAuthorizationCodeTokenResponseClient();
         accessTokenResponseClient.setRequestEntityConverter(customRequestEntityConverter);
-
+        log.debug("accessTokenResponseClient configured with CustomRequestEntityConverter: {}", customRequestEntityConverter);
         return accessTokenResponseClient;
     }
 
     @Bean
     public CustomRequestEntityConverter customRequestEntityConverter() {
-        return new CustomRequestEntityConverter();
+        CustomRequestEntityConverter converter = new CustomRequestEntityConverter();
+        log.debug("CustomRequestEntityConverter bean created: {}", converter);
+        return converter;
     }
 
     @Value("${JWT_SECRET_KEY}")
@@ -75,7 +81,9 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
-                        .tokenEndpoint(token -> token.accessTokenResponseClient(accessTokenResponseClient(customRequestEntityConverter())))
+                        .tokenEndpoint(token -> token
+                            .accessTokenResponseClient(accessTokenResponseClient(customRequestEntityConverter()))
+                        )
                         .userInfoEndpoint(userInfo -> userInfo.userService(oAuth2UserService))
                         .successHandler(oAuth2AuthenticationSuccessHandler)
                 )
@@ -119,6 +127,7 @@ public class SecurityConfig {
         configuration.addAllowedOrigin("http://localhost:3000"); // 웹용
         configuration.addAllowedOrigin("http://192.168.0.6:8081"); // Metro Bundler를 사용하는 React Native 앱
         configuration.addAllowedOrigin("http://10.0.2.2:8081"); // Android 에뮬레이터용
+        configuration.addAllowedOrigin("https://appleid.apple.com");
         configuration.addAllowedOriginPattern("*"); // 모든 요청 허용 (배포 환경에서는 주의)
 
         configuration.addAllowedMethod("*");
