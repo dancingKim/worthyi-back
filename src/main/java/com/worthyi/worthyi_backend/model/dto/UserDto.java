@@ -39,13 +39,8 @@ public class UserDto {
         
         public static Response from(User user) {
             return Response.builder()
-<<<<<<< Updated upstream
                 .email("")
                 .name("") 
-=======
-                .email(user.getEmail())
-                .name(user.getUsername())
->>>>>>> Stashed changes
                 .avatars(user.getAvatars().stream()
                     .map(AvatarResponse::from)
                     .collect(Collectors.toList()))

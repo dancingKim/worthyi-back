@@ -33,7 +33,6 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException {
-<<<<<<< Updated upstream
         log.info("=== OAuth2 Authentication Success Handler Start ===");
         
         log.debug("Creating JWT token for authenticated user: {}", authentication.getName());
@@ -51,23 +50,6 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
 
         log.debug("Refresh token valid time (ms): {}", refreshTokenValidTime);
         log.debug("Refresh token will expire at (UTC): {}", ZonedDateTime.now(ZoneId.of("UTC")).plus(Duration.ofMillis(refreshTokenValidTime)));
-=======
-        log.info("OAuth2 인증 성공 처리 시작");
-        
-        log.debug("JWT 토큰 생성 시작");
-        String jwtToken = jwtTokenProvider.createToken(authentication);
-        log.debug("생성된 JWT 토큰: {}", jwtToken);
-
-        String email = jwtTokenProvider.getEmailFromToken(jwtToken);
-        log.debug("토큰에서 추출한 이메일: {}", email);
-
-        String refreshToken = jwtTokenProvider.createRefreshToken(authentication);
-        log.debug("Refresh 토큰 생성: {}", refreshToken);
-
-        log.info("Redis에 Refresh 토큰 저장");
-        redisTemplate.opsForValue().set("refresh:" + email, refreshToken,
-                jwtTokenProvider.getRefreshTokenValidTime(), TimeUnit.MILLISECONDS);
->>>>>>> Stashed changes
 
         Optional<Cookie> oCookie = Arrays.stream(request.getCookies())
                 .filter(cookie -> cookie.getName().equals(REDIRECT_URI_PARAM))
@@ -82,32 +64,15 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
         response.addCookie(refreshTokenCookie);
         log.debug("Refresh token cookie added to response");
 
-<<<<<<< Updated upstream
         ZonedDateTime now = ZonedDateTime.now(ZoneId.of("UTC"));
         log.debug("Refresh token cookie creation time (UTC): {}", now);
         log.debug("Refresh token cookie max age (s): {}", refreshTokenCookie.getMaxAge());
-=======
-        
-        
-
->>>>>>> Stashed changes
-
         response.addHeader("Refresh-Token", refreshToken);
-<<<<<<< Updated upstream
-        
+
         String redirectUri = oCookie.map(Cookie::getValue).orElseGet(() -> LOCAL_REDIRECT_URL);
         log.info("Redirecting to: {}", redirectUri);
         
         response.sendRedirect(redirectUri + "/sociallogin?token=" + jwtToken);
         log.info("=== OAuth2 Authentication Success Handler End ===");
-=======
-
-        log.info("redirectUri = {}", redirectUri.orElseGet(() -> LOCAL_REDIRECT_URL));
-
-        // 인증 성공 후 리디렉션할 URL 설정
-        response.sendRedirect(redirectUri.orElseGet(() -> LOCAL_REDIRECT_URL) + "/sociallogin?token=" + jwtToken);
-        
-        log.info("OAuth2 인증 성공 처리 완료");
->>>>>>> Stashed changes
     }
 }

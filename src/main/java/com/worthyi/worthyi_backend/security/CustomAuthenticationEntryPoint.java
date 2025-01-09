@@ -18,26 +18,16 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response,
                         AuthenticationException authException) throws IOException {
-<<<<<<< Updated upstream
         log.info("=== Authentication Entry Point Triggered ===");
         log.error("Authentication failed: URI={}, Error={}", request.getRequestURI(), authException.getMessage());
-        
-=======
-        log.error("인증 실패: URI={}, 에러={}", request.getRequestURI(), authException.getMessage());
->>>>>>> Stashed changes
         response.setContentType("application/json;charset=UTF-8");
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         
         ObjectMapper mapper = new ObjectMapper();
         ApiResponse<?> errorResponse = ApiResponse.error(ApiStatus.UNAUTHORIZED);
-<<<<<<< Updated upstream
-        
+
         log.debug("Sending error response: {}", errorResponse);
         mapper.writeValue(response.getOutputStream(), errorResponse);
         log.info("=== Authentication Entry Point Complete ===");
-=======
-        log.error("응답 전송: {}", errorResponse);
-        mapper.writeValue(response.getOutputStream(), errorResponse);
->>>>>>> Stashed changes
     }
 } 
