@@ -7,7 +7,11 @@ import com.worthyi.worthyi_backend.security.JwtTokenProvider;
 import com.worthyi.worthyi_backend.security.OAuth2AuthenticationSuccessHandler;
 import com.worthyi.worthyi_backend.security.RedirectUrlCookieFilter;
 import com.worthyi.worthyi_backend.service.CustomOAuth2UserService;
+import com.worthyi.worthyi_backend.service.CustomOidcUserService;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,15 +23,15 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.client.endpoint.DefaultAuthorizationCodeTokenResponseClient;
 import org.springframework.security.oauth2.client.endpoint.OAuth2AccessTokenResponseClient;
 import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequest;
-import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter;
+import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
@@ -37,22 +41,8 @@ public class SecurityConfig {
     private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
 
     private final CustomOAuth2UserService oAuth2UserService;
+    private final CustomOidcUserService oidcUserService; // 새로 만든 OIDC 서비스
     private final RedirectUrlCookieFilter redirectUrlCookieFilter;
-
-    @Bean
-    public OAuth2AccessTokenResponseClient<OAuth2AuthorizationCodeGrantRequest> accessTokenResponseClient(CustomRequestEntityConverter customRequestEntityConverter) {
-        DefaultAuthorizationCodeTokenResponseClient accessTokenResponseClient = new DefaultAuthorizationCodeTokenResponseClient();
-        accessTokenResponseClient.setRequestEntityConverter(customRequestEntityConverter);
-        log.debug("accessTokenResponseClient configured with CustomRequestEntityConverter: {}", customRequestEntityConverter);
-        return accessTokenResponseClient;
-    }
-
-    @Bean
-    public CustomRequestEntityConverter customRequestEntityConverter() {
-        CustomRequestEntityConverter converter = new CustomRequestEntityConverter();
-        log.debug("CustomRequestEntityConverter bean created: {}", converter);
-        return converter;
-    }
 
     @Value("${JWT_SECRET_KEY}")
     private String secretKey;
@@ -84,37 +74,55 @@ public class SecurityConfig {
                 )
                 .oauth2Login(oauth2 -> oauth2
                         .tokenEndpoint(token -> token
-                            .accessTokenResponseClient(accessTokenResponseClient(customRequestEntityConverter()))
+                                .accessTokenResponseClient(accessTokenResponseClient(customRequestEntityConverter()))
                         )
-                        .userInfoEndpoint(userInfo -> userInfo.userService(oAuth2UserService))
+                        // userInfoEndpoint: 일반 OAuth2 vs. OIDC(Apple) 각각 서비스 등록
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(oAuth2UserService)  // 일반 OAuth2(예: Google)
+                                .oidcUserService(oidcUserService) // OIDC(예: Apple)
+                        )
                         .successHandler(oAuth2AuthenticationSuccessHandler)
-                        .failureHandler((_, response, exception) -> {
-                            if (exception instanceof OAuth2AuthenticationException) {
-                                OAuth2AuthenticationException oauth2Exception = (OAuth2AuthenticationException) exception;
-                                log.error("OAuth2 Authentication Exception: {}", oauth2Exception.getError().getDescription());
-                                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication failed: " + oauth2Exception.getError().getDescription());
-                            } else {
-                                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication failed");
-                            }
+                        .failureHandler((request, response, exception) -> {
+                            log.error("OAuth2 Authentication Exception: {}", exception.getMessage());
+                            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication failed: " + exception.getMessage());
                         })
                 )
-                .exceptionHandling(ex -> 
-                    ex.authenticationEntryPoint(new CustomAuthenticationEntryPoint())
-                    .accessDeniedHandler((_, response, _) -> {
-                        response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access Denied");
-                    })
+                .exceptionHandling(ex ->
+                        ex.authenticationEntryPoint(new CustomAuthenticationEntryPoint())
+                                .accessDeniedHandler((request, response, accessDeniedException) -> {
+                                    response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access Denied");
+                                })
                 );
 
-        http
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-        http
-                .addFilterBefore(redirectUrlCookieFilter, OAuth2AuthorizationRequestRedirectFilter.class);
+        // JWT 필터
+        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
+        // 소셜 로그인 Redirect 용 쿠키 필터
+        http.addFilterBefore(redirectUrlCookieFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
+    /**
+     * Apple 인증 시 client_secret 생성을 위해 사용
+     */
     @Bean
-    public JwtAuthenticationFilter jwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider, StringRedisTemplate redisTemplate ) {
+    public OAuth2AccessTokenResponseClient<OAuth2AuthorizationCodeGrantRequest> accessTokenResponseClient(
+            CustomRequestEntityConverter customRequestEntityConverter) {
+
+        DefaultAuthorizationCodeTokenResponseClient client = new DefaultAuthorizationCodeTokenResponseClient();
+        client.setRequestEntityConverter(customRequestEntityConverter);
+        return client;
+    }
+
+    @Bean
+    public CustomRequestEntityConverter customRequestEntityConverter() {
+        return new CustomRequestEntityConverter();
+    }
+
+    @Bean
+    public JwtAuthenticationFilter jwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider,
+                                                          StringRedisTemplate redisTemplate) {
         return new JwtAuthenticationFilter(jwtTokenProvider, redisTemplate);
     }
 
@@ -130,19 +138,22 @@ public class SecurityConfig {
     }
 
     @Bean
-    public StringRedisTemplate redisTemplate(RedisConnectionFactory redisConnectionFactory){
+    public StringRedisTemplate redisTemplate(RedisConnectionFactory redisConnectionFactory) {
         return new StringRedisTemplate(redisConnectionFactory);
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // React Native 앱에서의 요청을 허용
-        configuration.addAllowedOrigin("http://localhost:3000"); // 웹용
-        configuration.addAllowedOrigin("http://192.168.0.6:8081"); // Metro Bundler를 사용하는 React Native 앱
-        configuration.addAllowedOrigin("http://10.0.2.2:8081"); // Android 에뮬레이터용
-        configuration.addAllowedOrigin("https://appleid.apple.com");
-        configuration.addAllowedOriginPattern("*"); // 모든 요청 허용 (배포 환경에서는 주의)
+
+        // 필요에 따라 허용 도메인 설정
+        configuration.setAllowedOrigins(Arrays.asList(
+                "http://localhost:3000",
+                "http://192.168.0.6:8081",
+                "http://10.0.2.2:8081",
+                "https://appleid.apple.com"
+        ));
+        configuration.addAllowedOriginPattern("*");
 
         configuration.addAllowedMethod("*");
         configuration.addAllowedHeader("*");
