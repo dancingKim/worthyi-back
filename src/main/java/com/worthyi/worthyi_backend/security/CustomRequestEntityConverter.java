@@ -60,21 +60,23 @@ public class CustomRequestEntityConverter implements Converter<OAuth2Authorizati
         log.debug("State: {}", state);
         RequestEntity<?> entity = defaultConverter.convert(req);
         String registrationId = req.getClientRegistration().getRegistrationId();
-        Object body = entity.getBody();
 
-        if (registrationId.contains("apple") && body instanceof MultiValueMap) {
+        // 제네릭 타입을 명시적으로 지정하여 캐스팅
+        if (entity != null && entity.getBody() instanceof MultiValueMap) {
             @SuppressWarnings("unchecked")
-            MultiValueMap<String, String> params = (MultiValueMap<String, String>) body;
-            log.debug("Params: {}", params);
-            try {
-                log.debug("Creating client secret for Apple OAuth2");
-                params.set("client_secret", createClientSecret());
-                log.debug("Client secret set successfully");
-            } catch (IOException e) {
-                log.error("Error creating client secret: {}", e.getMessage());
-                throw new RuntimeException(e);
+            MultiValueMap<String, String> params = (MultiValueMap<String, String>) entity.getBody();
+
+            if (registrationId.contains("apple")) {
+                try {
+                    log.debug("Creating client secret for Apple OAuth2");
+                    params.set("client_secret", createClientSecret());
+                    log.debug("Client secret set successfully");
+                } catch (IOException e) {
+                    log.error("Error creating client secret: {}", e.getMessage());
+                    throw new RuntimeException(e);
+                }
+                return new RequestEntity<>(params, entity.getHeaders(), entity.getMethod(), entity.getUrl());
             }
-            return new RequestEntity<>(params, entity.getHeaders(), entity.getMethod(), entity.getUrl());
         }
         return entity;
     }

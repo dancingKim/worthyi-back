@@ -26,7 +26,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.worthyi.worthyi_backend.security.CustomAccessTokenResponseClient;
 
 @Configuration
 @EnableWebSecurity
@@ -44,13 +43,6 @@ public class SecurityConfig {
         accessTokenResponseClient.setRequestEntityConverter(customRequestEntityConverter);
         log.debug("accessTokenResponseClient configured with CustomRequestEntityConverter: {}", customRequestEntityConverter);
         return accessTokenResponseClient;
-    }
-
-    @Bean
-    public CustomAccessTokenResponseClient customAccessTokenResponseClient(CustomRequestEntityConverter customRequestEntityConverter) {
-        CustomAccessTokenResponseClient client = new CustomAccessTokenResponseClient();
-        client.setRequestEntityConverter(customRequestEntityConverter);
-        return client;
     }
 
     @Bean
@@ -90,7 +82,7 @@ public class SecurityConfig {
                 )
                 .oauth2Login(oauth2 -> oauth2
                         .tokenEndpoint(token -> token
-                            .accessTokenResponseClient(customAccessTokenResponseClient(customRequestEntityConverter()))
+                            .accessTokenResponseClient(accessTokenResponseClient(customRequestEntityConverter()))
                         )
                         .userInfoEndpoint(userInfo -> userInfo.userService(oAuth2UserService))
                         .successHandler(oAuth2AuthenticationSuccessHandler)
