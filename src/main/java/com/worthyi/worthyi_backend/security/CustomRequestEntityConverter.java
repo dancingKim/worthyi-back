@@ -49,6 +49,7 @@ public class CustomRequestEntityConverter implements Converter<OAuth2Authorizati
 
     @Override
     public RequestEntity<?> convert(OAuth2AuthorizationCodeGrantRequest req) {
+        log.debug("=== CustomRequestEntityConverter convert method called ===");
         log.debug("Converting OAuth2AuthorizationCodeGrantRequest for registrationId: {}",
                 req.getClientRegistration().getRegistrationId());
         // Authorization Code와 State 정보 로그 추가
@@ -79,6 +80,7 @@ public class CustomRequestEntityConverter implements Converter<OAuth2Authorizati
     }
 
     public PrivateKey getPrivateKey() throws IOException {
+        log.debug("=== CustomRequestEntityConverter getPrivateKey method called ===");
         log.debug("Getting private key for Apple OAuth2");
         try {
             // PEM 헤더와 푸터 제거
@@ -103,6 +105,7 @@ public class CustomRequestEntityConverter implements Converter<OAuth2Authorizati
     }
 
     public String createClientSecret() throws IOException {
+        log.debug("=== CustomRequestEntityConverter createClientSecret method called ===");
         log.debug("Creating JWT for client secret");
         Map<String, Object> jwtHeader = new HashMap<>();
         jwtHeader.put("kid", keyId);
