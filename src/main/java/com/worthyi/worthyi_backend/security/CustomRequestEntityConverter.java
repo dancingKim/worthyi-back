@@ -20,6 +20,9 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import java.util.Date;
 import org.springframework.beans.factory.annotation.Value;
 import lombok.extern.slf4j.Slf4j;
+import java.security.KeyFactory;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.util.Base64;
 
 @Getter
 @Component
@@ -72,12 +75,25 @@ public class CustomRequestEntityConverter implements Converter<OAuth2Authorizati
 
     public PrivateKey getPrivateKey() throws IOException {
         log.debug("Getting private key for Apple OAuth2");
-        try (PEMParser pemParser = new PEMParser(new StringReader(privateKeyContent))) {
-            PrivateKeyInfo object = (PrivateKeyInfo) pemParser.readObject();
-            JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
-            PrivateKey privateKey = converter.getPrivateKey(object);
+        try {
+            // PEM 헤더와 푸터 제거
+            String privateKeyPEM = privateKeyContent
+                    .replace("-----BEGIN PRIVATE KEY-----", "")
+                    .replace("-----END PRIVATE KEY-----", "")
+                    .replaceAll("\\s", "");
+
+            // Base64 디코딩
+            byte[] encoded = Base64.getDecoder().decode(privateKeyPEM);
+
+            // PrivateKey 객체 생성
+            PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(encoded);
+            KeyFactory keyFactory = KeyFactory.getInstance("EC");
+            PrivateKey privateKey = keyFactory.generatePrivate(keySpec);
             log.debug("Private key obtained successfully");
             return privateKey;
+        } catch (Exception e) {
+            log.error("Error obtaining private key: {}", e.getMessage());
+            throw new IOException("Failed to obtain private key", e);
         }
     }
 
