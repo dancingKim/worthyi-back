@@ -18,6 +18,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     // boolean existsByPoviderUserId(String ProviderUserId);
 
+<<<<<<< Updated upstream
     Optional<User> findByUserId(UUID userId);
 
     @Query("SELECT u FROM User u LEFT JOIN FETCH u.avatars WHERE u.userId = :userId")
@@ -25,4 +26,10 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     @Query("SELECT u FROM User u LEFT JOIN FETCH u.userRoles ur LEFT JOIN FETCH ur.role WHERE u.provider = :provider AND u.sub = :sub")
     Optional<User> findByProviderAndSub(@Param("provider") String provider, @Param("sub") String sub);
+=======
+    Optional<User> findByUserId(Long userId);
+
+    @Query("SELECT u FROM User u LEFT JOIN FETCH u.avatars WHERE u.userId = :userId")
+    Optional<User> findByUserIdWithAvatars(@Param("userId") Long userId);
+>>>>>>> Stashed changes
 }

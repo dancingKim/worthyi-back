@@ -56,7 +56,9 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     @Transactional
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
+<<<<<<< Updated upstream
         log.info("=== OAuth2 User Loading Start ===");
+        log.debug("UserRequest: {}", userRequest);
         OAuth2UserInfo oAuth2UserInfo;
         Map<String, Object> attributes = new HashMap<>();
 
@@ -80,6 +82,24 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         Optional<User> userOptional = userRepository.findByProviderAndSub(oAuth2UserInfo.getProvider(), oAuth2UserInfo.getSub());
         log.debug("Existing user check: {}", userOptional.isPresent() ? "found" : "not found");
+=======
+        log.info("OAuth2 사용자 정보 로딩 시작");
+        
+        OAuth2User oAuth2User = super.loadUser(userRequest);
+        log.debug("기본 OAuth2User 로드: {}", oAuth2User.getAttributes());
+
+        String registrationId = userRequest.getClientRegistration().getRegistrationId();
+        log.debug("OAuth2 제공자: {}", registrationId);
+
+        Map<String, Object> attributes = oAuth2User.getAttributes();
+        log.debug("OAuth2 속성: {}", attributes);
+
+        OAuth2UserInfo oAuth2UserInfo = OAuth2UserInfo.of(registrationId, attributes);
+        log.debug("변환된 OAuth2UserInfo: {}", oAuth2UserInfo);
+
+        Optional<User> userOptional = userRepository.findByEmailWithRoles(oAuth2UserInfo.getEmail());
+        log.debug("기존 사용자 조회 결과: {}", userOptional.isPresent() ? "존재" : "미존재");
+>>>>>>> Stashed changes
 
         User user = userOptional.orElseGet(() -> {
             User newUser = oAuth2UserInfo.toEntity();
