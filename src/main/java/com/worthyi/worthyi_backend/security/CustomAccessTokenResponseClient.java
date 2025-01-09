@@ -6,8 +6,12 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2AccessTokenRespon
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.web.client.RestTemplate;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CustomAccessTokenResponseClient implements OAuth2AccessTokenResponseClient<OAuth2AuthorizationCodeGrantRequest> {
+
+    private static final Logger log = LoggerFactory.getLogger(CustomAccessTokenResponseClient.class);
 
     private final RestTemplate restTemplate = new RestTemplate();
 
@@ -18,6 +22,8 @@ public class CustomAccessTokenResponseClient implements OAuth2AccessTokenRespons
         Map<String, Object> response = restTemplate.postForObject(
                 authorizationGrantRequest.getClientRegistration().getProviderDetails().getTokenUri(),
                 authorizationGrantRequest, Map.class);
+
+        log.debug("Apple token response: {}", response);
 
         // 응답을 파싱하여 OAuth2AccessTokenResponse로 변환합니다.
         return parseAppleTokenResponse(response);
