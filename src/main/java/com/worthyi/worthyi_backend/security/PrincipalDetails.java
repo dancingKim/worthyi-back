@@ -1,6 +1,5 @@
 package com.worthyi.worthyi_backend.security;
 
-import com.worthyi.worthyi_backend.model.entity.User;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

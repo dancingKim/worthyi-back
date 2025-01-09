@@ -68,7 +68,6 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
         log.debug("Refresh token cookie creation time (UTC): {}", now);
         log.debug("Refresh token cookie max age (s): {}", refreshTokenCookie.getMaxAge());
         response.addHeader("Refresh-Token", refreshToken);
-
         String redirectUri = oCookie.map(Cookie::getValue).orElseGet(() -> LOCAL_REDIRECT_URL);
         log.info("Redirecting to: {}", redirectUri);
         
