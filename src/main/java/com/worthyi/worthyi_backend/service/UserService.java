@@ -2,10 +2,8 @@ package com.worthyi.worthyi_backend.service;
 
 import com.worthyi.worthyi_backend.common.ApiStatus;
 import com.worthyi.worthyi_backend.model.dto.UserDto;
-import com.worthyi.worthyi_backend.model.entity.Role;
 import com.worthyi.worthyi_backend.model.entity.User;
 import com.worthyi.worthyi_backend.model.entity.UserRole;
-import com.worthyi.worthyi_backend.repository.RoleRepository;
 import com.worthyi.worthyi_backend.repository.UserRepository;
 import com.worthyi.worthyi_backend.repository.UserRoleRepository;
 import lombok.RequiredArgsConstructor;
