@@ -21,28 +21,25 @@ import com.worthyi.worthyi_backend.repository.UserRoleRepository;
 import com.worthyi.worthyi_backend.repository.VillageInstanceRepository;
 import com.worthyi.worthyi_backend.repository.VillageTemplateRepository;
 import com.worthyi.worthyi_backend.security.OAuth2UserInfo;
+import com.worthyi.worthyi_backend.security.OidcPrincipalDetails;
 import com.worthyi.worthyi_backend.security.PrincipalDetails;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
-import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
+import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
+import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
-import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Service;
 
+import jakarta.transaction.Transactional;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Slf4j
 @RequiredArgsConstructor
 @Service
-public class CustomOAuth2UserService extends DefaultOAuth2UserService {
+public class CustomOidcUserService extends OidcUserService {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
@@ -56,37 +53,43 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     @Transactional
     @Override
-    public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-        log.info("=== OAuth2 User Loading Start (OAuth2 Only) ===");
-        log.debug("UserRequest: {}", userRequest);
+    public OidcUser loadUser(OidcUserRequest userRequest) throws OAuth2AuthenticationException {
+        log.info("=== OIDC User Loading Start (e.g. Apple) ===");
+        log.debug("OidcUserRequest: {}", userRequest);
 
-        // Default 로드 (구글, 페이스북 등 일반 OAuth2)
-        OAuth2User oAuth2User = super.loadUser(userRequest);
+        // 먼저 OidcUserService가 제공하는 기본 OidcUser 로드
+        OidcUser oidcUser = super.loadUser(userRequest);
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
-        log.debug("OAuth2 provider: {}", registrationId);
+        log.debug("OIDC provider: {}", registrationId);
 
-        Map<String, Object> attributes = new HashMap<>(oAuth2User.getAttributes());
-        log.debug("OAuth2 attributes received: {}", attributes);
+        // Apple의 경우, id_token을 디코딩해서 필요한 값들을 추출할 수 있음
+        String idToken = userRequest.getIdToken().getTokenValue();
+        log.debug("Received idToken: {}", idToken);
 
-        // provider, sub 같은 기본 식별 정보 추출
+        // id_token Payload 디코딩
+        Map<String, Object> attributes = decodeJwtTokenPayload(idToken);
+        log.debug("Decoded attributes: {}", attributes);
+
+        // OIDC 표준 claims도 합쳐줌
+        attributes.putAll(oidcUser.getAttributes());
+
+        // provider, sub 등 정보 추출
         OAuth2UserInfo oAuth2UserInfo = OAuth2UserInfo.of(registrationId, attributes);
-        log.debug("OAuth2UserInfo created: {}", oAuth2UserInfo);
+        log.debug("OIDC UserInfo created: {}", oAuth2UserInfo);
 
-        // DB에 기존 사용자가 있는지 확인
+        // DB에 기존 사용자 존재 여부 확인
         Optional<User> userOptional = userRepository.findByProviderAndSub(
                 oAuth2UserInfo.getProvider(),
                 oAuth2UserInfo.getSub()
         );
 
         User user = userOptional.orElseGet(() -> {
-            // 없으면 새 유저 생성
-            log.debug("Creating new user for provider: {}", oAuth2UserInfo.getProvider());
+            log.debug("Creating new user for OIDC provider: {}", oAuth2UserInfo.getProvider());
             User newUser = oAuth2UserInfo.toEntity();
             newUser.setUserRoles(new ArrayList<>());
             User savedUser = userRepository.save(newUser);
             log.info("New user created: {}", savedUser);
 
-            // ROLE_USER 할당
             Role userRole = roleRepository.findByAuthorityName("ROLE_USER")
                     .orElseGet(() -> {
                         Role role = Role.builder()
@@ -101,7 +104,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             userRoleRepository.save(userRoleEntity);
             savedUser.getUserRoles().add(userRoleEntity);
 
-            // 마을, 아바타, 기본 장소 등 초기화
+            // 마을, 아바타, 장소 등 초기화
             VillageInstance villageInstance = VillageInstance.builder()
                     .user(savedUser)
                     .villageTemplate(villageTemplateRepository.findById(1L).orElseThrow())
@@ -142,13 +145,39 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             return savedUser;
         });
 
-        // attributes 에 추가 정보 담기
+        // 리턴할 attributes 에 사용자 데이터 추가
         attributes.put("userId", user.getUserId().toString());
         attributes.put("provider", user.getProvider());
         attributes.put("sub", user.getSub());
         attributes.put("authorities", user.getAuthorities());
 
-        log.info("=== OAuth2 User Loading End (OAuth2 Only) ===");
-        return new PrincipalDetails(attributes, "userId");
+        log.info("=== OIDC User Loading End ===");
+
+        // 우리가 사용하는 PrincipalDetails로 반환 (OIDC 표준 OidcUser 대신)
+        return new OidcPrincipalDetails(oidcUser, attributes, "userId");
+    }
+
+    /**
+     * Apple 등에서 받은 id_token의 Payload 부분(Base64) 디코딩
+     */
+    private Map<String, Object> decodeJwtTokenPayload(String jwtToken) {
+        log.debug("Decoding JWT token payload");
+        Map<String, Object> jwtClaims = new HashMap<>();
+        try {
+            String[] parts = jwtToken.split("\\.");
+            Base64.Decoder decoder = Base64.getUrlDecoder();
+
+            byte[] decodedBytes = decoder.decode(parts[1].getBytes(StandardCharsets.UTF_8));
+            String decodedString = new String(decodedBytes, StandardCharsets.UTF_8);
+            ObjectMapper mapper = new ObjectMapper();
+
+            Map<String, Object> map = mapper.readValue(decodedString, new TypeReference<>() {});
+            jwtClaims.putAll(map);
+            log.debug("JWT claims decoded: {}", jwtClaims);
+
+        } catch (JsonProcessingException e) {
+            log.error("Error decoding JWT token: {}", e.getMessage());
+        }
+        return jwtClaims;
     }
 }
