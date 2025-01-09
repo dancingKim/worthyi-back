@@ -7,8 +7,7 @@ import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
 import java.util.Map;
 
 /**
- * This class wraps your existing PrincipalDetails logic
- * and also satisfies OidcUser for Apple or any other OIDC provider.
+ * OIDC 전용 (Apple 등)
  */
 @Getter
 public class OidcPrincipalDetails extends PrincipalDetails implements OidcUser {
@@ -18,12 +17,10 @@ public class OidcPrincipalDetails extends PrincipalDetails implements OidcUser {
     public OidcPrincipalDetails(OidcUser oidcDelegate, 
                                 Map<String, Object> mergedAttributes, 
                                 String attributeKey) {
-        // Pass the merged attributes to the parent PrincipalDetails constructor
+        // 부모(PrincipalDetails)의 생성자 호출
         super(mergedAttributes, attributeKey);
         this.oidcDelegate = oidcDelegate;
     }
-
-    /** OIDC-specific methods delegated to the original OidcUser. */
 
     @Override
     public Map<String, Object> getClaims() {
@@ -40,16 +37,9 @@ public class OidcPrincipalDetails extends PrincipalDetails implements OidcUser {
         return oidcDelegate.getIdToken();
     }
 
-    /**
-     * You can choose whether to override getName() with your own logic,
-     * or use the delegate's name, or the parent logic.
-     */
     @Override
     public String getName() {
-        // For example, just use parent's logic that returns "userId"
+        // userId를 반환하도록 부모 로직 사용
         return super.getName();
-
-        // Alternatively, you could use:
-        // return oidcDelegate.getName();
     }
 }

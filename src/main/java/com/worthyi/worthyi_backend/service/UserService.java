@@ -28,26 +28,19 @@ public class UserService {
     private final UserRoleRepository userRoleRepository;
 
     /**
-     * 이메일을 기반으로 사용자의 권한 정보(GrantedAuthority)를 조회하는 메서드
-     *
-     * @param providerUserId 사용자 이메일
-     * @return 사용자 권한 목록
-     * @throws UsernameNotFoundException 사용자를 찾을 수 없을 때 발생
+     * userId(실제로는 UUID)로 사용자의 권한 정보를 조회
+     * @param userId String 형태의 UUID
      */
     public List<GrantedAuthority> getUserAuthoritiesByUserId(String userId) {
-        // 1. 이메일로 사용자 정보 조회
         Optional<User> userOptional = userRepository.findByUserId(UUID.fromString(userId));
 
-        // 2. 사용자 정보가 존재하는 경우
         if (userOptional.isPresent()) {
             User user = userOptional.get();
-
-            // 3. UserRole 테이블에서 사용자 ID에 해당하는 역할(Role) 조회
+            // User -> UserRole -> Role 매핑
             List<UserRole> userRoles = userRoleRepository.findByUser_UserId(UUID.fromString(userId));
 
-            // 4. Role 정보를 GrantedAuthority 리스트로 변환하여 반환
             return userRoles.stream()
-                    .map(userRole -> new SimpleGrantedAuthority(userRole.getRole().getAuthorityName()))  // "ROLE_USER", "ROLE_ADMIN" 등
+                    .map(userRole -> new SimpleGrantedAuthority(userRole.getRole().getAuthorityName()))
                     .collect(Collectors.toList());
         } else {
             throw new UsernameNotFoundException("User not found with userId: " + userId);
@@ -63,7 +56,6 @@ public class UserService {
                     log.error("getUserInfo - User not found for userId: {}", userId);
                     return new IllegalArgumentException(ApiStatus.USER_NOT_FOUND.getMessage());
                 });
-        
         
         UserDto.Response response = UserDto.Response.from(user);
         log.info("getUserInfo - Successfully created response DTO for user: {}", response);

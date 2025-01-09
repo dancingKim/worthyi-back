@@ -2,7 +2,6 @@ package com.worthyi.worthyi_backend.model.dto;
 
 import com.worthyi.worthyi_backend.model.entity.Avatar;
 import com.worthyi.worthyi_backend.model.entity.User;
-
 import lombok.*;
 
 import java.util.List;
@@ -15,8 +14,10 @@ public class UserDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Response {
+        // 더 이상 email과 name을 쓰지 않는다면, 제거하거나 빈 값으로 두세요.
         private String email;
         private String name;
+
         private List<AvatarResponse> avatars;
         
         @Builder
@@ -39,12 +40,12 @@ public class UserDto {
         
         public static Response from(User user) {
             return Response.builder()
-                .email("")
-                .name("") 
+                .email("")      // 더 이상 이메일을 안 쓰면 빈 문자열 또는 null
+                .name("")       // 마찬가지
                 .avatars(user.getAvatars().stream()
                     .map(AvatarResponse::from)
                     .collect(Collectors.toList()))
                 .build();
         }
     }
-} 
+}

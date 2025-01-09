@@ -7,18 +7,21 @@ import lombok.ToString;
 
 import java.util.Map;
 
+/**
+ * OAuth2 / OIDC 로그인 시, provider + sub 등 최소 정보만 보관
+ */
 @Builder
 @Getter
 @ToString
 public class OAuth2UserInfo {
-    private String provider;
-    private String sub;
+    private String provider;  // "google" / "apple" 등
+    private String sub;       // OAuth2 provider에서 유저 식별값
 
     public static OAuth2UserInfo of(String registrationId, Map<String, Object> attributes) {
-        return switch (registrationId) { // OAuth2 공급자별로 사용자 정보 생성
+        return switch (registrationId) {
             case "google" -> ofGoogle(registrationId, attributes);
             case "apple" -> ofApple(registrationId, attributes);
-            default -> throw new IllegalStateException("Unexpected value: " + registrationId);
+            default -> throw new IllegalStateException("Unexpected provider: " + registrationId);
         };
     }
 
@@ -37,6 +40,7 @@ public class OAuth2UserInfo {
     }
 
     public User toEntity() {
+        // username 컬럼 없어졌으므로, sub + provider 만으로 유저 식별
         return User.builder()
                 .provider(provider)
                 .sub(sub)

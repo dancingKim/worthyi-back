@@ -24,13 +24,16 @@ public class PrincipalDetails implements OAuth2User, UserDetails {
 
     @Override
     public String getUsername() {
+        // DB 칼럼 username이 아님! 
+        // 단지 Spring Security의 "UserDetails" 규약상 필요한 메서드 이름일 뿐
         return (String) attributes.get("userId");
     }
 
     @Override
     public String getName() {
+        // attributeKey로부터 가져오되, 없으면 userId로 fallback
         String attr = (String) attributes.get(attributeKey);
-        return attr.toString(); // Fallback to username if attribute is null
+        return attr == null ? (String) attributes.get("userId") : attr;
     }
 
     @Override
@@ -45,36 +48,33 @@ public class PrincipalDetails implements OAuth2User, UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        // userRoles가 null일 경우 빈 리스트 반환
         String roles = (String) attributes.get("authorities");
         if (roles == null || roles.isEmpty()) {
             return Collections.emptyList();
         }
-
         return java.util.Arrays.stream(roles.split(","))
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());
-
     }
 
     @Override
     public boolean isAccountNonExpired() {
-        return true; // 계정 만료되지 않음
+        return true; 
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        return true; // 계정 잠기지 않음
+        return true; 
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
-        return true; // 자격 증명 만료되지 않음
+        return true; 
     }
 
     @Override
     public boolean isEnabled() {
-        return true; // 계정 활성화됨
+        return true; 
     }
 
     @Override

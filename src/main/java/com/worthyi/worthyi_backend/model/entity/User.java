@@ -10,6 +10,9 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.UUID;
 
+/**
+ * username 컬럼 제거됨.
+ */
 @ToString
 @Entity
 @Table(name = "\"user\"")
@@ -42,17 +45,19 @@ public class User extends BaseEntity {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // Relationships
-
+    // 소셜 계정 정보 (원하면 사용)
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SocialAccount> socialAccounts;
 
+    // 아바타들
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Avatar> avatars;
 
+    // 마을 템플릿 (User -> VillageTemplate)
     @OneToMany(mappedBy = "creatorUser", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<VillageTemplate> villageTemplates;
 
+    // UserRole 관계
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     @Builder.Default
     private List<UserRole> userRoles = new ArrayList<>();
