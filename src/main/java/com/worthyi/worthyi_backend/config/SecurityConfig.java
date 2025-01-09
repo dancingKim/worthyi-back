@@ -26,6 +26,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 
 @Configuration
 @EnableWebSecurity
@@ -86,9 +88,21 @@ public class SecurityConfig {
                         )
                         .userInfoEndpoint(userInfo -> userInfo.userService(oAuth2UserService))
                         .successHandler(oAuth2AuthenticationSuccessHandler)
+                        .failureHandler((_, response, exception) -> {
+                            if (exception instanceof OAuth2AuthenticationException) {
+                                OAuth2AuthenticationException oauth2Exception = (OAuth2AuthenticationException) exception;
+                                log.error("OAuth2 Authentication Exception: {}", oauth2Exception.getError().getDescription());
+                                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication failed: " + oauth2Exception.getError().getDescription());
+                            } else {
+                                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication failed");
+                            }
+                        })
                 )
                 .exceptionHandling(ex -> 
                     ex.authenticationEntryPoint(new CustomAuthenticationEntryPoint())
+                    .accessDeniedHandler((_, response, _) -> {
+                        response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access Denied");
+                    })
                 );
 
         http
