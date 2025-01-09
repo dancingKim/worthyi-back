@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.time.DayOfWeek;
 import java.time.temporal.TemporalAdjusters;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.UUID;
 
@@ -33,7 +32,6 @@ public class ActionService {
     private final AdultActionTemplateRepository adultActionTemplateRepository;
     private final ChildActionInstanceRepository childActionInstanceRepository;
     private final AdultActionInstanceRepository adultActionInstanceRepository;
-    private final UserRepository userRepository;
     private final VillageInstanceRepository villageInstanceRepository;
 
     public ApiResponse<ActionDto.Response> saveChildAction(ActionDto.Request actionDto, PrincipalDetails user) {

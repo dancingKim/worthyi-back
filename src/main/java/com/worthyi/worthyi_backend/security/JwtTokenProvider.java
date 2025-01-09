@@ -1,6 +1,5 @@
 package com.worthyi.worthyi_backend.security;
 
-import com.worthyi.worthyi_backend.model.entity.User;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.HttpServletRequest;
@@ -10,8 +9,6 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.stereotype.Component;
-import jakarta.annotation.PostConstruct;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
@@ -21,7 +18,6 @@ import java.util.stream.Collectors;
 import org.springframework.security.core.Authentication;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 
@@ -59,7 +55,6 @@ public class JwtTokenProvider {
     }
 
     public String createToken(Authentication authentication, Collection<? extends GrantedAuthority> roles) {
-<<<<<<< Updated upstream
         log.info("=== Creating JWT Token with Roles ===");
         
         PrincipalDetails principalDetails = (PrincipalDetails) authentication.getPrincipal();
@@ -93,32 +88,6 @@ public class JwtTokenProvider {
 
         log.info("Token created successfully");
         log.debug("Token: {}", token);
-=======
-        log.info("토큰 생성 시작: 사용자={}", authentication.getName());
-
-        PrincipalDetails principalDetails = (PrincipalDetails) authentication.getPrincipal();
-        log.debug("Principal 정보: {}", principalDetails);
-
-        String email = authentication.getName();
-        String authorities = roles.stream()
-                .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.joining(","));
-        log.debug("권한 정보: {}", authorities);
-
-        Claims claims = Jwts.claims().setSubject(email);
-        claims.put("roles", authorities);
-        claims.put("userId", principalDetails.getUser().getUserId());
-        
-        Date now = new Date();
-        String token = Jwts.builder()
-                .setClaims(claims)
-                .setIssuedAt(now)
-                .setExpiration(new Date(now.getTime() + tokenValidTime))
-                .signWith(key, SignatureAlgorithm.HS256)
-                .compact();
-
-        log.info("토큰 생성 완료: {}", token);
->>>>>>> Stashed changes
         return token;
     }
 
@@ -254,17 +223,12 @@ public class JwtTokenProvider {
 
     // 토큰의 유효성 및 만료일자 확인
     public boolean validateToken(String token) {
-<<<<<<< Updated upstream
         log.info("=== Validating Token ===");
-=======
-        log.info("토큰 검증 시작");
->>>>>>> Stashed changes
         try {
             Jwts.parserBuilder()
                     .setSigningKey(key)
                     .build()
                     .parseClaimsJws(token);
-<<<<<<< Updated upstream
             log.info("Token validation successful");
             return true;
         } catch (ExpiredJwtException e) {
@@ -277,20 +241,6 @@ public class JwtTokenProvider {
             log.error("Invalid signature: {}", e.getMessage());
         } catch (IllegalArgumentException e) {
             log.error("Invalid token: {}", e.getMessage());
-=======
-            log.info("토큰 검증 성공");
-            return true;
-        } catch (ExpiredJwtException e) {
-            log.error("만료된 토큰: {}", e.getMessage());
-        } catch (UnsupportedJwtException e) {
-            log.error("지원되지 않는 토큰: {}", e.getMessage());
-        } catch (MalformedJwtException e) {
-            log.error("잘못된 형식의 토큰: {}", e.getMessage());
-        } catch (SecurityException e) {
-            log.error("유효하지 않은 서명: {}", e.getMessage());
-        } catch (IllegalArgumentException e) {
-            log.error("잘못된 토큰: {}", e.getMessage());
->>>>>>> Stashed changes
         }
         return false;
     }
