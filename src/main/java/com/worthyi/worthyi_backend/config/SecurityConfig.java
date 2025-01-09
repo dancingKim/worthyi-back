@@ -47,6 +47,13 @@ public class SecurityConfig {
     }
 
     @Bean
+    public CustomAccessTokenResponseClient customAccessTokenResponseClient(CustomRequestEntityConverter customRequestEntityConverter) {
+        CustomAccessTokenResponseClient client = new CustomAccessTokenResponseClient();
+        client.setRequestEntityConverter(customRequestEntityConverter);
+        return client;
+    }
+
+    @Bean
     public CustomRequestEntityConverter customRequestEntityConverter() {
         CustomRequestEntityConverter converter = new CustomRequestEntityConverter();
         log.debug("CustomRequestEntityConverter bean created: {}", converter);
@@ -83,13 +90,13 @@ public class SecurityConfig {
                 )
                 .oauth2Login(oauth2 -> oauth2
                         .tokenEndpoint(token -> token
-                            .accessTokenResponseClient(new CustomAccessTokenResponseClient())
+                            .accessTokenResponseClient(customAccessTokenResponseClient(customRequestEntityConverter()))
                         )
                         .userInfoEndpoint(userInfo -> userInfo.userService(oAuth2UserService))
                         .successHandler(oAuth2AuthenticationSuccessHandler)
                 )
-                .exceptionHandling(ex -> ex
-                    .authenticationEntryPoint(new CustomAuthenticationEntryPoint())
+                .exceptionHandling(ex -> 
+                    ex.authenticationEntryPoint(new CustomAuthenticationEntryPoint())
                 );
 
         http

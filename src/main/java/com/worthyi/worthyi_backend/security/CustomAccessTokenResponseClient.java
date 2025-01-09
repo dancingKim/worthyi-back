@@ -15,6 +15,12 @@ public class CustomAccessTokenResponseClient implements OAuth2AccessTokenRespons
 
     private final RestTemplate restTemplate = new RestTemplate();
 
+    private CustomRequestEntityConverter requestEntityConverter;
+
+    public void setRequestEntityConverter(CustomRequestEntityConverter requestEntityConverter) {
+        this.requestEntityConverter = requestEntityConverter;
+    }
+
     @Override
     @SuppressWarnings("unchecked")
     public OAuth2AccessTokenResponse getTokenResponse(OAuth2AuthorizationCodeGrantRequest authorizationGrantRequest) {
