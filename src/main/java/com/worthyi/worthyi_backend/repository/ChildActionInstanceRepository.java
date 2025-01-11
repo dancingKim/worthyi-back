@@ -28,4 +28,6 @@ public interface ChildActionInstanceRepository extends JpaRepository<ChildAction
         @Param("startDate") LocalDateTime startDate,
         @Param("endDate") LocalDateTime endDate
     );
+
+    void deleteByAvatarIdIn(List<Long> avatarIds);
 }
