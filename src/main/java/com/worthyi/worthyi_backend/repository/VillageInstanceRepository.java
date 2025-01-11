@@ -11,4 +11,6 @@ public interface VillageInstanceRepository extends JpaRepository<VillageInstance
     Optional<VillageInstance> findByVillageId(Long villageId);
     
     Optional<VillageInstance> findByUserUserId(UUID userId);
+
+    void deleteByUser_UserId(UUID userId);
 }
