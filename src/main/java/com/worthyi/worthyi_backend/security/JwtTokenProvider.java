@@ -21,6 +21,9 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 
+import com.worthyi.worthyi_backend.common.ApiStatus;
+import com.worthyi.worthyi_backend.exception.CustomException;
+
 @Slf4j
 public class JwtTokenProvider {
 
@@ -32,11 +35,9 @@ public class JwtTokenProvider {
     @Getter
     private final long refreshTokenValidTime = 30 * 60 * 1000L;
 
-    private final StringRedisTemplate redisTemplate;
 
     public JwtTokenProvider(String secretKey, StringRedisTemplate redisTemplate) {
         this.secretKey = secretKey;
-        this.redisTemplate = redisTemplate;
         init(); // key 초기화
     }
 
@@ -221,28 +222,35 @@ public class JwtTokenProvider {
         return null;
     }
 
+    public void validateAccessToken(String token) {
+        try {
+            validateToken(token);
+        } catch (ExpiredJwtException e) {
+            throw new CustomException(ApiStatus.EXPIRED_ACCESS_TOKEN, "Access token has expired");
+        } catch (JwtException e) {
+            throw new CustomException(ApiStatus.INVALID_TOKEN, "Invalid access token");
+        }
+    }
+
+    public void validateRefreshToken(String token) {
+            try {
+                validateToken(token);
+            } catch (ExpiredJwtException e) {
+                throw new CustomException(ApiStatus.EXPIRED_REFRESH_TOKEN, "Refresh token has expired");
+            } catch (JwtException e) {
+                throw new CustomException(ApiStatus.INVALID_TOKEN, "Invalid refresh token");
+            }
+    }
     // 토큰의 유효성 및 만료일자 확인
-    public boolean validateToken(String token) {
-        log.info("=== Validating Token ===");
+    public void validateToken(String token) {
         try {
             Jwts.parserBuilder()
-                    .setSigningKey(key)
-                    .build()
-                    .parseClaimsJws(token);
-            log.info("Token validation successful");
-            return true;
-        } catch (ExpiredJwtException e) {
-            log.error("Token expired: {}", e.getMessage());
-        } catch (UnsupportedJwtException e) {
-            log.error("Unsupported token: {}", e.getMessage());
-        } catch (MalformedJwtException e) {
-            log.error("Malformed token: {}", e.getMessage());
-        } catch (SecurityException e) {
-            log.error("Invalid signature: {}", e.getMessage());
-        } catch (IllegalArgumentException e) {
-            log.error("Invalid token: {}", e.getMessage());
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token);
+        } catch (Exception e) {
+            throw e;
         }
-        return false;
     }
 
     public long getExpiration(String token) {

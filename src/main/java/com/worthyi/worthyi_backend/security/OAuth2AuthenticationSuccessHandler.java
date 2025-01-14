@@ -72,5 +72,17 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
         
         response.sendRedirect(redirectUri + "/sociallogin?token=" + jwtToken);
         log.info("=== OAuth2 Authentication Success Handler End ===");
+
+        // HTTP-ONLY 쿠키에서 refreshToken 읽기
+        Optional<Cookie> refreshTokenCookie = Arrays.stream(request.getCookies())
+                .filter(cookie -> "refreshToken".equals(cookie.getName()))
+                .findFirst();
+
+        if (refreshTokenCookie.isPresent()) {
+            String refreshToken = refreshTokenCookie.get().getValue();
+            log.debug("Refresh token from HTTP-ONLY cookie: {}", refreshToken);
+        } else {
+            log.warn("No refresh token found in HTTP-ONLY cookie");
+        }
     }
 }
