@@ -25,4 +25,4 @@ public class OAuth2AuthenticationFailureHandler implements AuthenticationFailure
         ApiResponse<?> apiResponse = ApiResponse.error(ApiStatus.UNAUTHORIZED, "Authentication failed: " + exception.getMessage());
         response.getWriter().write(new ObjectMapper().writeValueAsString(apiResponse));
     }
-} 
+}
