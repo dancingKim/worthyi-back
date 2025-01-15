@@ -5,13 +5,13 @@ import com.worthyi.worthyi_backend.model.dto.AdultActionDto;
 import com.worthyi.worthyi_backend.model.dto.ApiResponse;
 import com.worthyi.worthyi_backend.security.PrincipalDetails;
 import com.worthyi.worthyi_backend.service.ActionService;
+import com.worthyi.worthyi_backend.common.ApiStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import com.worthyi.worthyi_backend.common.ApiStatus;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -29,11 +29,15 @@ public class ActionController {
         log.info("=== Save Child Action Start ===");
         log.debug("Request payload: {}", request);
         log.debug("User: id={}, providerUserId={}", principal.getName(), principal.getUsername());
-        
+
         ApiResponse<ActionDto.Response> response = actionService.saveChildAction(request, principal);
-        
+
         log.info("=== Save Child Action End === Status: {}", response.getCode());
-        return ResponseEntity.status(response.getCode()).body(response);
+
+        // ★ HTTP 응답코드는 3자리(httpStatus), Body.code는 response.getCode()
+        return ResponseEntity
+                .status(response.getApiStatus().getHttpStatus())
+                .body(response);
     }
 
     @PostMapping("/{childActionId}/adult")
@@ -44,8 +48,8 @@ public class ActionController {
         log.info("=== Save Adult Action Request Received ===");
 
         try {
-            ApiResponse<AdultActionDto.Response> response = 
-                actionService.saveAdultAction(childActionId, actionDto, principal);
+            ApiResponse<AdultActionDto.Response> response =
+                    actionService.saveAdultAction(childActionId, actionDto, principal);
             log.info("Save Adult Action completed with status: {}", response.getCode());
             return response;
         } catch (Exception e) {
@@ -54,7 +58,6 @@ public class ActionController {
         }
     }
 
-    // ActionController.java
     @GetMapping
     public ApiResponse<List<ActionDto.Response>> getChildActionsByDate(
             @AuthenticationPrincipal PrincipalDetails principal,
@@ -62,13 +65,12 @@ public class ActionController {
     ) {
         log.info("=== Get Child Actions By Date Start ===");
         log.debug("Requested date: {}", date);
-        
+
         List<ActionDto.Response> responses = actionService.getChildActionsByDate(principal.getName(), date);
-        
+
         log.info("=== Get Child Actions By Date End === Found {} actions", responses.size());
         return ApiResponse.success(responses);
     }
-
 
     @GetMapping("/logs")
     public ApiResponse<ActionDto.ActionLogResponse> getLogs(
@@ -77,9 +79,9 @@ public class ActionController {
     ) {
         log.info("=== Get Action Logs Start ===");
         log.debug("Requested date: {}", date);
-        
+
         ActionDto.ActionLogResponse result = actionService.getActionLogs(principal, date);
-        
+
         log.info("=== Get Action Logs End === Successfully retrieved logs");
         return ApiResponse.success(result);
     }
@@ -90,9 +92,9 @@ public class ActionController {
             @AuthenticationPrincipal PrincipalDetails principal) {
         log.info("=== Delete Child Action Start ===");
         log.debug("User: id={}, providerUserId={}", principal.getName(), principal.getUsername());
-        
+
         actionService.deleteChildAction(id, principal.getName());
-        
+
         log.info("=== Delete Child Action End === Successfully deleted");
         return ApiResponse.success(null);
     }

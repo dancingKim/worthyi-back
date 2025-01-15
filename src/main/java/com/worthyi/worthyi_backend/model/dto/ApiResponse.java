@@ -3,21 +3,25 @@ package com.worthyi.worthyi_backend.model.dto;
 import com.worthyi.worthyi_backend.common.ApiStatus;
 
 public class ApiResponse<T> {
-    private int code;
-    private String message;
-    private T data;
+    private int code;       // Body에 들어갈 세부 코드
+    private String message; // Body에 들어갈 메시지
+    private T data;         // 실제 데이터
+
+    private ApiStatus apiStatus; // ★ 추가: 어떤 ApiStatus인지 저장
 
     public ApiResponse(ApiStatus status, T data) {
-        this.code = status.getCode();
+        this.code = status.getCode();     // ex) 40121
         this.message = status.getMessage();
         this.data = data;
+        this.apiStatus = status;          // 추가
     }
 
     // 메시지를 커스터마이징할 수 있는 생성자 추가
     public ApiResponse(ApiStatus status, String message, T data) {
         this.code = status.getCode();
-        this.message = message != null ? message : status.getMessage();
+        this.message = (message != null ? message : status.getMessage());
         this.data = data;
+        this.apiStatus = status; // 추가
     }
 
     public int getCode() {
@@ -30,6 +34,10 @@ public class ApiResponse<T> {
 
     public T getData() {
         return data;
+    }
+
+    public ApiStatus getApiStatus() {
+        return apiStatus;
     }
 
     // 성공 응답

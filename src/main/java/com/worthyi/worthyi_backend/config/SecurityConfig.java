@@ -67,6 +67,7 @@ public class SecurityConfig {
                                 "/",
                                 "/login",
                                 "/auth/**",
+                                "/auth/token/refresh",
                                 "/oauth2/**",
                                 "/actuator/**",
                                 "/css/**",

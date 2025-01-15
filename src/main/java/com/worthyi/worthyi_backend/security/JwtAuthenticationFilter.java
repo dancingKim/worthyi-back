@@ -13,6 +13,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 import com.worthyi.worthyi_backend.exception.CustomException;
+
 import java.io.IOException;
 
 @Slf4j
@@ -28,9 +29,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private void sendErrorResponse(HttpServletResponse response, ApiStatus status, String message) throws IOException {
-        response.setStatus(status.getCode());
+        // 3자리 표준코드로 설정
+        response.setStatus(status.getHttpStatus());
         response.setContentType("application/json;charset=UTF-8");
-        
+
         ApiResponse<?> apiResponse = ApiResponse.error(status, message);
         String jsonResponse = objectMapper.writeValueAsString(apiResponse);
         response.getWriter().write(jsonResponse);
@@ -41,7 +43,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
         try {
             String token = jwtTokenProvider.resolveToken(request);
-            
+
             if (token != null) {
                 String isLogout = redisTemplate.opsForValue().get("blacklist:" + token);
                 log.debug("Token blacklist check: {}", isLogout != null ? "blacklisted" : "valid");
