@@ -6,9 +6,10 @@ import com.worthyi.worthyi_backend.security.JwtAuthenticationFilter;
 import com.worthyi.worthyi_backend.security.JwtTokenProvider;
 import com.worthyi.worthyi_backend.security.OAuth2AuthenticationSuccessHandler;
 import com.worthyi.worthyi_backend.security.RedirectUrlCookieFilter;
+import com.worthyi.worthyi_backend.security.OAuth2AuthenticationFailureHandler;
+import com.worthyi.worthyi_backend.security.CustomAccessDeniedHandler;
 import com.worthyi.worthyi_backend.service.CustomOAuth2UserService;
 import com.worthyi.worthyi_backend.service.CustomOidcUserService;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +24,6 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.client.endpoint.DefaultAuthorizationCodeTokenResponseClient;
 import org.springframework.security.oauth2.client.endpoint.OAuth2AccessTokenResponseClient;
 import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequest;
-import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -41,8 +41,10 @@ public class SecurityConfig {
     private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
 
     private final CustomOAuth2UserService oAuth2UserService;
-    private final CustomOidcUserService oidcUserService; // 새로 만든 OIDC 서비스
+    private final CustomOidcUserService oidcUserService;
     private final RedirectUrlCookieFilter redirectUrlCookieFilter;
+    private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
+    private final CustomAccessDeniedHandler customAccessDeniedHandler;
 
     @Value("${JWT_SECRET_KEY}")
     private String secretKey;
@@ -82,16 +84,11 @@ public class SecurityConfig {
                                 .oidcUserService(oidcUserService) // OIDC(예: Apple)
                         )
                         .successHandler(oAuth2AuthenticationSuccessHandler)
-                        .failureHandler((request, response, exception) -> {
-                            log.error("OAuth2 Authentication Exception: {}", exception.getMessage());
-                            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication failed: " + exception.getMessage());
-                        })
+                        .failureHandler(oAuth2AuthenticationFailureHandler)
                 )
                 .exceptionHandling(ex ->
                         ex.authenticationEntryPoint(new CustomAuthenticationEntryPoint())
-                                .accessDeniedHandler((request, response, accessDeniedException) -> {
-                                    response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access Denied");
-                                })
+                                .accessDeniedHandler(customAccessDeniedHandler)
                 );
 
         // JWT 필터

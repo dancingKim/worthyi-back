@@ -3,6 +3,7 @@ package com.worthyi.worthyi_backend.controller;
 import com.worthyi.worthyi_backend.common.ApiStatus;
 import com.worthyi.worthyi_backend.model.dto.ApiResponse;
 import com.worthyi.worthyi_backend.service.AuthService;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +11,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Arrays;
+import java.util.Optional;
 
 @Slf4j
 @RestController
@@ -26,16 +30,13 @@ public class AuthController {
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             log.error("잘못된 Authorization 헤더");
-            return ApiResponse.error(ApiStatus.BAD_REQUEST, "Authorization header is missing or invalid");
+        return ApiResponse.error(ApiStatus.BAD_REQUEST, "Authorization header is missing or invalid");
         }
 
         String accessToken = authHeader.replace("Bearer ", "");
         log.debug("추출된 액세스 토큰: {}", accessToken);
         
-        if (!authService.isAccessTokenValid(accessToken)) {
-            log.error("유효하지 않은 액세스 토큰");
-            return ApiResponse.error(ApiStatus.INVALID_TOKEN, "Invalid access token");
-        }
+        authService.validateAccessToken(accessToken);
 
         log.info("로그아웃 처리 시작");
         authService.logout(accessToken);
@@ -45,19 +46,23 @@ public class AuthController {
 
     @PostMapping("/token/refresh")
     public ApiResponse<?> refreshTokens(HttpServletRequest request, HttpServletResponse response) {
+
         log.info("토큰 갱신 요청 시작");
-        String refreshToken = request.getHeader("refresh_token");
+
+        // HTTP-ONLY 쿠키에서 refreshToken 읽기
+        Optional<Cookie> refreshTokenCookie = Arrays.stream(request.getCookies())
+                .filter(cookie -> "refreshToken".equals(cookie.getName()))
+                .findFirst();
+
+        if (refreshTokenCookie.isEmpty()) {
+            log.error("Refresh 토큰 누락");
+            return ApiResponse.error(ApiStatus.MISSING_REFRESH_TOKEN, "Refresh token is missing in cookies");
+        }
+
+        String refreshToken = refreshTokenCookie.get().getValue();
         log.debug("Refresh 토큰: {}", refreshToken);
 
-        if (refreshToken == null) {
-            log.error("Refresh 토큰 누락");
-            return ApiResponse.error(ApiStatus.MISSING_REFRESH_TOKEN, "Please provide a refresh token in the header");
-        }
-
-        if (!authService.isRefreshTokenValid(refreshToken)) {
-            log.error("유효하지 않은 Refresh 토큰");
-            return ApiResponse.error(ApiStatus.INVALID_TOKEN, "The provided refresh token is not valid");
-        }
+        authService.validateRefreshToken(refreshToken);
 
         try {
             log.info("토큰 갱신 처리 시작");

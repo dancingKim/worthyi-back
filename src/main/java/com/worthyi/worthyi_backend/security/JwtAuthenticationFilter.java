@@ -12,7 +12,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
-
+import com.worthyi.worthyi_backend.exception.CustomException;
 import java.io.IOException;
 
 @Slf4j
@@ -40,12 +40,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
         try {
-            log.info("=== JWT Authentication Filter Start ===");
-            log.debug("Processing request: {} {}", request.getMethod(), request.getRequestURI());
-            
             String token = jwtTokenProvider.resolveToken(request);
-            log.debug("JWT token resolved: {}", token != null ? "present" : "absent");
-
+            
             if (token != null) {
                 String isLogout = redisTemplate.opsForValue().get("blacklist:" + token);
                 log.debug("Token blacklist check: {}", isLogout != null ? "blacklisted" : "valid");
@@ -56,31 +52,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     return;
                 }
 
-
-                // if (jwtTokenProvider.isTokenExpired(token)) {
-                    // log.warn("Expired token detected");
-                    // sendErrorResponse(response, ApiStatus.UNAUTHORIZED, "JWT 토큰이 만료되었습니다");
-                    // return;
-                // }
-
-
-                if (!jwtTokenProvider.validateToken(token)) {
-                    log.warn("Invalid token detected");
-                    sendErrorResponse(response, ApiStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다");
+                try {
+                    // 액세스 토큰 검증만 수행
+                    jwtTokenProvider.validateAccessToken(token);
+                    Authentication authentication = jwtTokenProvider.getAuthentication(token);
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                } catch (CustomException e) {
+                    sendErrorResponse(response, e.getStatus(), e.getMessage());
                     return;
                 }
-
-                Authentication authentication = jwtTokenProvider.getAuthentication(token);
-                log.debug("Authentication created: principal={}", authentication.getName());
-                
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-                log.debug("Authentication set in SecurityContext");
             }
 
-            log.info("=== JWT Authentication Filter End ===");
             filterChain.doFilter(request, response);
         } catch (Exception e) {
-            log.error("Authentication processing error", e);
             sendErrorResponse(response, ApiStatus.INTERNAL_SERVER_ERROR, "인증 처리 중 오류가 발생했습니다");
         }
     }

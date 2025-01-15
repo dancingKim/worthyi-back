@@ -12,6 +12,8 @@ public enum ApiStatus {
     UNAUTHORIZED(401, "Unauthorized access"),
     INVALID_TOKEN(401, "Invalid token"),
     EXPIRED_TOKEN(401, "Expired token"),
+    EXPIRED_ACCESS_TOKEN(40121, "Expired access token"),
+    EXPIRED_REFRESH_TOKEN(40122, "Expired refresh token"),
     TOKEN_MISMATCH(401, "Token does not match stored refresh token"),
     FORBIDDEN(403, "Access forbidden"),
     NOT_FOUND(404, "Resource not found"),
