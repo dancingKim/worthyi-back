@@ -23,7 +23,7 @@ public class ActionController {
     private final ActionService actionService;
 
     @PostMapping("/child")
-    public ResponseEntity<ApiResponse<ActionDto.Response>> saveChildAction(
+    public ApiResponse<ActionDto.Response> saveChildAction(
             @RequestBody ActionDto.Request request,
             @AuthenticationPrincipal PrincipalDetails principal) {
         log.info("=== Save Child Action Start ===");
@@ -34,10 +34,7 @@ public class ActionController {
 
         log.info("=== Save Child Action End === Status: {}", response.getCode());
 
-        // ★ HTTP 응답코드는 3자리(httpStatus), Body.code는 response.getCode()
-        return ResponseEntity
-                .status(response.getApiStatus().getHttpStatus())
-                .body(response);
+        return response;
     }
 
     @PostMapping("/{childActionId}/adult")

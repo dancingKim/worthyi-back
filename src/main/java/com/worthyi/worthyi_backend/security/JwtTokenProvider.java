@@ -226,8 +226,10 @@ public class JwtTokenProvider {
         try {
             validateToken(token);
         } catch (ExpiredJwtException e) {
+            log.error("Access token has expired: {}", e.getMessage());
             throw new CustomException(ApiStatus.EXPIRED_ACCESS_TOKEN, "Access token has expired");
         } catch (JwtException e) {
+            log.error("Invalid access token: {}", e.getMessage());
             throw new CustomException(ApiStatus.INVALID_TOKEN, "Invalid access token");
         }
     }
@@ -236,8 +238,10 @@ public class JwtTokenProvider {
             try {
                 validateToken(token);
             } catch (ExpiredJwtException e) {
+                log.error("Refresh token has expired: {}", e.getMessage());
                 throw new CustomException(ApiStatus.EXPIRED_REFRESH_TOKEN, "Refresh token has expired");
             } catch (JwtException e) {
+                log.error("Invalid Refresh token: {}", e.getMessage());
                 throw new CustomException(ApiStatus.INVALID_TOKEN, "Invalid refresh token");
             }
     }
