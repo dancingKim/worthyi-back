@@ -63,6 +63,7 @@ public class SecurityConfig {
                                 "/oauth2/authorization/**",
                                 "/login/oauth2/code/**",
                                 "/auth/authorize/**",
+                                "/auth/token/**",
                                 "/",
                                 "/login",
                                 "/auth/**",
