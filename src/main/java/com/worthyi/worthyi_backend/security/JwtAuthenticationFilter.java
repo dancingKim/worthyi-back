@@ -28,7 +28,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private void sendErrorResponse(HttpServletResponse response, ApiStatus status, String message) throws IOException {
-        response.setStatus(status.getCode());
+        response.setStatus(status.getHttpStatus());
         response.setContentType("application/json;charset=UTF-8");
         
         ApiResponse<?> apiResponse = ApiResponse.error(status, message);
