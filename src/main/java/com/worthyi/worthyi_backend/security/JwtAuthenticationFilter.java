@@ -13,7 +13,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 import com.worthyi.worthyi_backend.exception.CustomException;
-
 import java.io.IOException;
 
 @Slf4j
@@ -29,10 +28,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private void sendErrorResponse(HttpServletResponse response, ApiStatus status, String message) throws IOException {
-        // 3자리 표준코드로 설정
-        response.setStatus(status.getHttpStatus());
+        response.setStatus(status.getCode());
         response.setContentType("application/json;charset=UTF-8");
-
+        
         ApiResponse<?> apiResponse = ApiResponse.error(status, message);
         String jsonResponse = objectMapper.writeValueAsString(apiResponse);
         response.getWriter().write(jsonResponse);
@@ -43,7 +41,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
         try {
             String token = jwtTokenProvider.resolveToken(request);
-
+            
             if (token != null) {
                 String isLogout = redisTemplate.opsForValue().get("blacklist:" + token);
                 log.debug("Token blacklist check: {}", isLogout != null ? "blacklisted" : "valid");
@@ -68,6 +66,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
         } catch (Exception e) {
             sendErrorResponse(response, ApiStatus.INTERNAL_SERVER_ERROR, "인증 처리 중 오류가 발생했습니다");
+            return;
         }
     }
 }
