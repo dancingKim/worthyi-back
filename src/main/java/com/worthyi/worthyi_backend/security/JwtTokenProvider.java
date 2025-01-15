@@ -30,10 +30,10 @@ public class JwtTokenProvider {
     private final String secretKey;
     private SecretKey key;
 
-    private final long tokenValidTime = 5 * 60 * 1000L; // 토큰 유효 시간: 30분
+    private final long tokenValidTime = 7* 24 * 60 * 60 * 1000L; // 토큰 유효 시간: 7일
 
     @Getter
-    private final long refreshTokenValidTime = 10 * 60 * 1000L;
+    private final long refreshTokenValidTime = 7 * 24 * 60 * 60 * 1000L; // 리프레시 토큰 유효 시간: 7일
 
 
     public JwtTokenProvider(String secretKey, StringRedisTemplate redisTemplate) {
