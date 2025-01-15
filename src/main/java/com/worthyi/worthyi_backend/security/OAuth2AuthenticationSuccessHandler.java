@@ -60,6 +60,7 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
         refreshTokenCookie.setSecure(true);
         refreshTokenCookie.setPath("/");
         refreshTokenCookie.setMaxAge((int) (refreshTokenValidTime / 1000));
+        refreshTokenCookie.setDomain("api-dev.worthyilife.com");
         response.addCookie(refreshTokenCookie);
         log.debug("Refresh token cookie added to response");
 

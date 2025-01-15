@@ -50,9 +50,11 @@ public class AuthController {
         log.info("토큰 갱신 요청 시작");
 
         // HTTP-ONLY 쿠키에서 refreshToken 읽기
-        Optional<Cookie> refreshTokenCookie = Arrays.stream(request.getCookies())
-                .filter(cookie -> "refreshToken".equals(cookie.getName()))
-                .findFirst();
+
+        Optional<Cookie> refreshTokenCookie = Optional.ofNullable(request.getCookies())
+                .flatMap(cookies -> Arrays.stream(cookies)
+                    .filter(cookie -> "refreshToken".equals(cookie.getName()))
+                    .findFirst());
 
         if (refreshTokenCookie.isEmpty()) {
             log.error("Refresh 토큰 누락");
