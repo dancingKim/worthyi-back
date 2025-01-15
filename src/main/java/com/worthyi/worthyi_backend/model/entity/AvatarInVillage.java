@@ -2,7 +2,6 @@ package com.worthyi.worthyi_backend.model.entity;
 
 import lombok.*;
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "avatar_in_village")
