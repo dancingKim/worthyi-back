@@ -33,16 +33,20 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException {
         log.info("=== OAuth2 Authentication Success Handler Start ===");
-        
+
+        // JWT 토큰 생성
         log.debug("Creating JWT token for authenticated user: {}", authentication.getName());
         String jwtToken = jwtTokenProvider.createToken(authentication);
-        
+
+        // 사용자 ID 추출
         String userId = jwtTokenProvider.getUserIdFromToken(jwtToken);
         log.debug("Email extracted from token: {}", userId);
 
+        // Refresh Token 생성
         log.debug("Creating refresh token");
         String refreshToken = jwtTokenProvider.createRefreshToken(authentication);
 
+        // Refresh Token을 Redis에 저장
         log.info("Saving refresh token to Redis");
         long refreshTokenValidTime = jwtTokenProvider.getRefreshTokenValidTime();
         redisTemplate.opsForValue().set("refresh:" + userId, refreshToken, refreshTokenValidTime, TimeUnit.MILLISECONDS);
@@ -50,27 +54,27 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
         log.debug("Refresh token valid time (ms): {}", refreshTokenValidTime);
         log.debug("Refresh token will expire at (UTC): {}", ZonedDateTime.now(ZoneId.of("UTC")).plus(Duration.ofMillis(refreshTokenValidTime)));
 
-        Optional<Cookie> oCookie = Arrays.stream(request.getCookies())
-                .filter(cookie -> cookie.getName().equals(REDIRECT_URI_PARAM))
-                .findFirst();
+        // Redirect URI 쿠키 검색
+        Optional<Cookie> oCookie = Optional.ofNullable(request.getCookies())
+                .flatMap(cookies -> Arrays.stream(cookies)
+                        .filter(cookie -> cookie.getName().equals(REDIRECT_URI_PARAM))
+                        .findFirst());
         log.debug("Redirect URI cookie found: {}", oCookie.isPresent());
 
-        Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
-        refreshTokenCookie.setHttpOnly(true);
-        refreshTokenCookie.setSecure(true);
-        refreshTokenCookie.setPath("/");
-        refreshTokenCookie.setMaxAge((int) (refreshTokenValidTime / 1000));
-        refreshTokenCookie.setDomain("api-dev.worthyilife.com");
-        response.addCookie(refreshTokenCookie);
-        log.debug("Refresh token cookie added to response");
+        // 수동으로 Set-Cookie 헤더 설정 (SameSite=None; Secure)
+        String setCookieHeader = String.format("refreshToken=%s; Path=/; Domain=api-dev.worthyilife.com; HttpOnly; Secure; SameSite=None; Max-Age=%d",
+                refreshToken, refreshTokenValidTime / 1000);
+        response.addHeader("Set-Cookie", setCookieHeader);
+        log.debug("Refresh token cookie added to response with SameSite=None; Secure");
 
-        ZonedDateTime now = ZonedDateTime.now(ZoneId.of("UTC"));
-        log.debug("Refresh token cookie creation time (UTC): {}", now);
-        log.debug("Refresh token cookie max age (s): {}", refreshTokenCookie.getMaxAge());
+        // 추가 헤더 설정 (필요 시)
         response.addHeader("Refresh-Token", refreshToken);
+
+        // Redirect URI 결정
         String redirectUri = oCookie.map(Cookie::getValue).orElseGet(() -> LOCAL_REDIRECT_URL);
         log.info("Redirecting to: {}", redirectUri);
-        
+
+        // 클라이언트로 리디렉션
         response.sendRedirect(redirectUri + "/sociallogin?token=" + jwtToken);
         log.info("=== OAuth2 Authentication Success Handler End ===");
     }
