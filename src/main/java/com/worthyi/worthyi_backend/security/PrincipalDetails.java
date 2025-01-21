@@ -24,9 +24,7 @@ public class PrincipalDetails implements OAuth2User, UserDetails {
 
     @Override
     public String getUsername() {
-        // DB 칼럼 username이 아님! 
-        // 단지 Spring Security의 "UserDetails" 규약상 필요한 메서드 이름일 뿐
-        return (String) attributes.get("userId");
+        return (String) attributes.get(attributeKey);
     }
 
     @Override

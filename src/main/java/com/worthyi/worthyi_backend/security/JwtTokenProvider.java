@@ -30,7 +30,7 @@ public class JwtTokenProvider {
     private final String secretKey;
     private SecretKey key;
 
-    private final long tokenValidTime = 7* 24 * 60 * 60 * 1000L; // 토큰 유효 시간: 7일
+    private final long tokenValidTime = 60 * 60 * 1000L; // 토큰 유효 시간: 1시간
 
     @Getter
     private final long refreshTokenValidTime = 7 * 24 * 60 * 60 * 1000L; // 리프레시 토큰 유효 시간: 7일
@@ -45,6 +45,46 @@ public class JwtTokenProvider {
         // SecretKey 초기화
         this.key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
         log.info("SecretKey initialized.");
+    }
+    public String createToken(Map<String, Object> attributes) {
+        String userId = (String) attributes.get("userId");
+        String authorities = (String) attributes.get("roles");
+
+        Claims claims = Jwts.claims().setSubject(userId);
+        claims.put("roles", authorities);
+
+        LocalDateTime now = LocalDateTime.now();
+        ZonedDateTime expirationTime = now.atZone(ZoneId.systemDefault())
+                                          .withZoneSameInstant(ZoneId.of("UTC"))
+                                          .plus(tokenValidTime / (60 * 1000), ChronoUnit.MINUTES);
+        Date expirationDate = Date.from(expirationTime.toInstant());
+
+        String token = Jwts.builder()
+                .setClaims(claims)
+                .setIssuedAt(Date.from(now.atZone(ZoneId.systemDefault()).toInstant()))
+                .setExpiration(expirationDate)
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+
+        return token;
+    }
+
+    public String createRefreshToken(Map<String, Object> attributes) {
+        String userId = (String) attributes.get("userId");
+        Claims claims = Jwts.claims().setSubject(userId);
+
+        LocalDateTime now = LocalDateTime.now();
+        ZonedDateTime expirationTime = now.atZone(ZoneId.systemDefault())
+                                          .withZoneSameInstant(ZoneId.of("UTC"))
+                                          .plus(refreshTokenValidTime / (60 * 1000), ChronoUnit.MINUTES);
+        Date expirationDate = Date.from(expirationTime.toInstant());
+
+        return Jwts.builder()
+                .setClaims(claims)
+                .setIssuedAt(Date.from(now.atZone(ZoneId.systemDefault()).toInstant()))
+                .setExpiration(expirationDate)
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact(); 
     }
 
     // JWT 토큰 생성 메소드
