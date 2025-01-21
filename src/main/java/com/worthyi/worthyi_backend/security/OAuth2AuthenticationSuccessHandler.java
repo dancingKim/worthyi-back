@@ -34,6 +34,13 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
                                         Authentication authentication) throws IOException {
         log.info("=== OAuth2 Authentication Success Handler Start ===");
         log.info("requestURI: {}", request.getRequestURI());
+        log.info("requestURL: {}", request.getRequestURL());
+        log.info("request protocol: {}", request.getProtocol());
+        log.info("request remoteAddr: {}", request.getRemoteAddr());
+        log.info("request remoteHost: {}", request.getRemoteHost());
+        log.info("request remotePort: {}", request.getRemotePort());
+        log.info("request remoteUser: {}", request.getRemoteUser());
+        log.info("request remotePort: {}", request.getRemotePort());
 
         // JWT 토큰 생성
         log.debug("Creating JWT token for authenticated user: {}", authentication.getName());
