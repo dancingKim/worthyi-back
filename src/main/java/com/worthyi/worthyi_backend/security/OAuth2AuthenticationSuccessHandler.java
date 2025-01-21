@@ -65,11 +65,12 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
         String setCookieHeader = String.format("refreshToken=%s; Path=/; Domain=api-dev.worthyilife.com; HttpOnly; Secure; SameSite=None; Max-Age=%d",
                 refreshToken, refreshTokenValidTime / 1000);
         response.addHeader("Set-Cookie", setCookieHeader);
+        log.info("Set-Cookie header: {}", setCookieHeader);
         log.debug("Refresh token cookie added to response with SameSite=None; Secure");
 
         // 추가 헤더 설정 (필요 시)
         response.addHeader("Refresh-Token", refreshToken);
-
+        log.info("Refresh-Token header: {}", refreshToken);
         // Redirect URI 결정
         String redirectUri = oCookie.map(Cookie::getValue).orElseGet(() -> LOCAL_REDIRECT_URL);
         log.info("Redirecting to: {}", redirectUri);
