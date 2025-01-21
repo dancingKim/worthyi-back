@@ -48,7 +48,17 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
 
         // JWT 토큰 생성
         log.debug("Creating JWT token for authenticated user: {}", authentication.getName());
+        attributes.remove("nonce");
+        attributes.remove("at_hash");
+        attributes.remove("aud");
+        attributes.remove("nonce_supported");
+        attributes.remove("email_verified");
         attributes.remove("auth_time");
+        attributes.remove("iss");
+        attributes.remove("iat");
+        attributes.remove("exp");
+        attributes.remove("nonce");
+
 
         String attributesJson =  objectMapper.writeValueAsString(attributes);
 
