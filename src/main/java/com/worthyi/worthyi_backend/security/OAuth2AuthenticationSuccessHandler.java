@@ -33,7 +33,7 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException {
         log.info("=== OAuth2 Authentication Success Handler Start ===");
-        log.info("request: {}", request);
+        log.info("requestURI: {}", request.getRequestURI());
 
         // JWT 토큰 생성
         log.debug("Creating JWT token for authenticated user: {}", authentication.getName());
