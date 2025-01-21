@@ -14,6 +14,10 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.util.List;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.Cookie;
+import java.util.Optional;
+import java.util.Arrays;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -25,10 +29,24 @@ public class ActionController {
     @PostMapping("/child")
     public ApiResponse<ActionDto.Response> saveChildAction(
             @RequestBody ActionDto.Request request,
-            @AuthenticationPrincipal PrincipalDetails principal) {
+            @AuthenticationPrincipal PrincipalDetails principal,
+            HttpServletRequest httpServletRequest) {
         log.info("=== Save Child Action Start ===");
         log.debug("Request payload: {}", request);
         log.debug("User: id={}, providerUserId={}", principal.getName(), principal.getUsername());
+        log.debug("Request URI: {}", httpServletRequest.getRequestURI());
+        
+
+        Optional<Cookie> refreshTokenCookie = Optional.ofNullable(httpServletRequest.getCookies())
+                .flatMap(cookies -> Arrays.stream(cookies)
+                    .filter(cookie -> "refreshToken".equals(cookie.getName()))
+                    .findFirst());
+
+        if (refreshTokenCookie.isPresent()) {
+            log.info("Refresh token found in cookies: {}", refreshTokenCookie.get().getValue());
+        } else {
+            log.info("No refresh token found in cookies");
+        }
 
         ApiResponse<ActionDto.Response> response = actionService.saveChildAction(request, principal);
 
