@@ -14,6 +14,10 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import com.worthyi.worthyi_backend.model.dto.TokenDto;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Map;
+import com.fasterxml.jackson.core.type.TypeReference;
 
 @Slf4j
 @Service
@@ -44,8 +48,31 @@ public class AuthService {
             throw new CustomException(ApiStatus.INTERNAL_SERVER_ERROR, "Logout process failed");
         }
     }
+    public TokenDto.Response getToken(String authCode) {
+        try {
+            String attributesJson = redisTemplate.opsForValue().get("authCode:" + authCode);
+            if (attributesJson == null) {
+                throw new CustomException(ApiStatus.NOT_FOUND, "Auth code not found");
+            }
 
-    public String refreshTokens(String refreshToken, HttpServletResponse response) {
+            ObjectMapper objectMapper = new ObjectMapper();
+            Map<String, Object> attributes = objectMapper.readValue(attributesJson, new TypeReference<Map<String, Object>>() {});
+            String accessToken = jwtTokenProvider.createToken(attributes);
+            String refreshToken = jwtTokenProvider.createRefreshToken(attributes);
+
+            String userId = (String) attributes.get("userId");
+
+            redisTemplate.opsForValue().set("refresh:" + userId, refreshToken, jwtTokenProvider.getRefreshTokenValidTime(), TimeUnit.MILLISECONDS);
+            redisTemplate.delete("authCode:" + authCode);
+
+            return TokenDto.Response.of(accessToken, refreshToken);
+        } catch (Exception e) {
+            log.error("Token generation failed: {}", e.getMessage());
+            throw new CustomException(ApiStatus.INTERNAL_SERVER_ERROR, "Token generation process failed");
+        }
+    }
+
+    public TokenDto.RefreshResponse refreshTokens(String refreshToken, HttpServletResponse response) {
         try {
             String userId = jwtTokenProvider.getUserIdFromToken(refreshToken);
             String redisRefreshToken = redisTemplate.opsForValue().get("refresh:" + userId);
@@ -55,25 +82,12 @@ public class AuthService {
             if (redisRefreshToken != null && redisRefreshToken.equals(refreshToken)) {
                 List<GrantedAuthority> authorities = userService.getUserAuthoritiesByUserId(userId);
                 String newAccessToken = jwtTokenProvider.createToken(authentication, authorities);
-                String newRefreshToken = jwtTokenProvider.createRefreshToken(authentication);
 
                 // 새로운 Refresh Token을 Redis에 저장
-                redisTemplate.opsForValue().set(
-                        "refresh:" + userId,
-                        newRefreshToken,
-                        jwtTokenProvider.getRefreshTokenValidTime(),
-                        TimeUnit.MILLISECONDS
-                );
 
-                response.setHeader("Authorization", "Bearer " + newAccessToken);
-                response.setHeader("Refresh-Token", newRefreshToken);
+                TokenDto.RefreshResponse tokens = TokenDto.RefreshResponse.of(newAccessToken);
 
-                ZonedDateTime now = ZonedDateTime.now(ZoneId.of("UTC"));
-                log.debug("Tokens refreshed at (UTC): {}", now);
-                log.debug("New access token expiration time (UTC): {}", jwtTokenProvider.getExpiration(newAccessToken));
-                log.debug("New refresh token expiration time (UTC): {}", jwtTokenProvider.getExpiration(newRefreshToken));
-
-                return "Tokens refreshed successfully";
+                return tokens;
             }
 
             throw new CustomException(ApiStatus.TOKEN_MISMATCH, "The refresh token does not match the stored token");
