@@ -40,5 +40,8 @@ logging:
   level:
     root: DEBUG # 루트 로깅 레벨을 DEBUG로 설정
 
+server:
+  forward-headers-strategy: native
+
 apple:
   url: https://appleid.apple.com
