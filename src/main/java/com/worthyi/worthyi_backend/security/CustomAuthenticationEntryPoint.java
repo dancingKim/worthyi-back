@@ -22,12 +22,10 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
         log.error("Authentication failed: URI={}, Error={}", request.getRequestURI(), authException.getMessage());
         response.setContentType("application/json;charset=UTF-8");
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        
-        ObjectMapper mapper = new ObjectMapper();
-        ApiResponse<?> errorResponse = ApiResponse.error(ApiStatus.UNAUTHORIZED);
 
-        log.debug("Sending error response: {}", errorResponse);
-        mapper.writeValue(response.getOutputStream(), errorResponse);
+        ApiResponse<?> errorResponse = ApiResponse.error(ApiStatus.UNAUTHORIZED, "Authentication Failed");
+        response.getWriter().write(new ObjectMapper().writeValueAsString(errorResponse));
+
         log.info("=== Authentication Entry Point Complete ===");
     }
 } 
