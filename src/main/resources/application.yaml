@@ -3,6 +3,9 @@ spring:
     name: WorthyI
   profiles:
     active: local
+  web:
+    resources:
+      add-mappings: false
   jpa:
     show-sql: true
     hibernate:
