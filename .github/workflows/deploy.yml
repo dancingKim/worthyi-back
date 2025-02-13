@@ -14,15 +14,17 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+
     - name: Download and install Java 23
       run: |
-       wget https://corretto.aws/downloads/latest/amazon-corretto-23-x64-linux-jdk.tar.gz 
-       tar -xzf amazon-corretto-23-x64-linux-jdk.tar.gz
-       sudo mkdir -p /usr/local/amazon-corretto-23
-       sudo mv amazon-corretto-* /usr/local/amazon-corretto-23
-       echo "JAVA_HOME=/usr/local/amazon-corretto-23" >> $GITHUB_ENV
-       echo "/usr/local/amazon-corretto-23/bin" >> $GITHUB_PATH
-
+        wget https://corretto.aws/downloads/latest/amazon-corretto-23-x64-linux-jdk.tar.gz
+        tar -xzf amazon-corretto-23-x64-linux-jdk.tar.gz
+        sudo mkdir -p /usr/local/amazon-corretto-23
+        # 하위 디렉터리의 모든 파일을 /usr/local/amazon-corretto-23로 이동
+        sudo mv amazon-corretto-*/* /usr/local/amazon-corretto-23/
+        echo "JAVA_HOME=/usr/local/amazon-corretto-23" >> $GITHUB_ENV
+        echo "/usr/local/amazon-corretto-23/bin" >> $GITHUB_PATH 
+      
     - name: Grant execute permission for Gradle
       run: chmod +x gradlew
 
