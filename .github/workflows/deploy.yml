@@ -18,6 +18,7 @@ jobs:
       run: |
        wget https://corretto.aws/downloads/latest/amazon-corretto-23-x64-linux-jdk.tar.gz 
        tar -xzf amazon-corretto-23-x64-linux-jdk.tar.gz
+       sudo mkdir -p /usr/local/amazon-corretto-23
        sudo mv amazon-corretto-* /usr/local/amazon-corretto-23
        echo "JAVA_HOME=/usr/local/amazon-corretto-23" >> $GITHUB_ENV
        echo "/usr/local/amazon-corretto-23/bin" >> $GITHUB_PATH
