@@ -26,9 +26,9 @@ else
     exit 1
 fi
 
-# Redis 서비스 확인 및 기동
-if systemctl list-unit-files | grep -q '^redis6\.service'; then
-    echo "Redis service is installed." >> $LOG_FILE
+# Redis 패키지 확인 및 기동
+if rpm -q redis6 >/dev/null 2>&1; then
+    echo "Redis package is installed." >> $LOG_FILE
 else
     echo "Redis6 is not installed. Provision the instance before deploying." >> $ERROR_LOG_FILE
     exit 1
