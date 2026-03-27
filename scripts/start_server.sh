@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -euo pipefail
+
 # 로그 디렉토리 구조 설정
 LOG_DIR="/home/ec2-user/logs"
 APP_LOG_DIR="${LOG_DIR}/application"
@@ -35,7 +37,7 @@ fi
 
 # 이전 Java 프로세스 종료
 echo "Stopping any existing java applications..." >> $LOG_FILE
-pkill -f java || true
+sudo pkill -f java || true
 
 # JAR 파일 경로 설정
 cd /home/ec2-user/app

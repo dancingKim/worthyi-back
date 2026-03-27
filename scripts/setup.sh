@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -euo pipefail
+
 # 로그 디렉토리 구조 설정
 LOG_DIR="/home/ec2-user/logs"
 DEPLOY_LOG_DIR="${LOG_DIR}/deploy"
@@ -17,7 +19,7 @@ echo "=== Setup Start: $(date) ===" >> $LOG_FILE
 
 # 이전 애플리케이션 중지
 echo "Stopping any existing java applications..." >> $LOG_FILE
-pkill -f java || true
+sudo pkill -f java || true
 
 # 이전 배포 파일 정리 (jar 파일만)
 echo "Cleaning previous deployment files..." >> $LOG_FILE
@@ -35,11 +37,5 @@ sudo chown -R ec2-user:ec2-user /home/ec2-user/scripts
 sudo chmod -R 755 /home/ec2-user/app
 sudo chmod -R 755 /home/ec2-user/deploy
 sudo chmod -R 755 /home/ec2-user/scripts
-
-# 스크립트 파일 권한 설정
-if [ -d "/home/ec2-user/scripts" ]; then
-    echo "Setting execute permissions for scripts..." >> $LOG_FILE
-    sudo chmod 755 /home/ec2-user/scripts/*.sh
-fi
 
 echo "=== Setup Complete: $(date) ===" >> $LOG_FILE
