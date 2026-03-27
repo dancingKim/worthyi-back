@@ -18,6 +18,7 @@ import java.nio.charset.StandardCharsets;
 @RequiredArgsConstructor
 public class RedirectUrlCookieFilter extends OncePerRequestFilter {
     public static final String REDIRECT_URI_PARAM = "redirect_url";
+    private static final String LEGACY_REDIRECT_URI_PARAM = "redirect_uri";
     private static final int MAX_AGE = 3600;
     private final OAuth2RedirectValidator redirectValidator;
 
@@ -27,6 +28,9 @@ public class RedirectUrlCookieFilter extends OncePerRequestFilter {
 
         if (requestURI.startsWith("/oauth2/authorization")) {
             String requestedRedirectUrl = request.getParameter(REDIRECT_URI_PARAM);
+            if (requestedRedirectUrl == null) {
+                requestedRedirectUrl = request.getParameter(LEGACY_REDIRECT_URI_PARAM);
+            }
             String safeRedirectUrl = redirectValidator.resolveRedirectUriOrDefault(requestedRedirectUrl);
             if (requestedRedirectUrl != null && !redirectValidator.isAllowed(requestedRedirectUrl)) {
                 log.warn("Blocked untrusted redirect_url: {}", requestedRedirectUrl);
