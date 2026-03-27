@@ -2,10 +2,7 @@ package com.worthyi.worthyi_backend.model.entity;
 
 import lombok.*;
 import jakarta.persistence.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.UUID;
@@ -36,14 +33,6 @@ public class User extends BaseEntity {
 
     @Column(name = "authorities", length = 255, columnDefinition = "varchar(255) default 'user'")
     private String authorities;
-
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @UpdateTimestamp
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
 
     // 소셜 계정 정보 (원하면 사용)
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)

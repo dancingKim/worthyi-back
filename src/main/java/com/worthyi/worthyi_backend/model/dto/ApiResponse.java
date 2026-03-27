@@ -1,7 +1,13 @@
 package com.worthyi.worthyi_backend.model.dto;
 
 import com.worthyi.worthyi_backend.common.ApiStatus;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.NoArgsConstructor;
 
+@Getter
+@Setter
+@NoArgsConstructor
 public class ApiResponse<T> {
     private int code;       // Body에 들어갈 세부 코드
     private String message; // Body에 들어갈 메시지
@@ -42,7 +48,11 @@ public class ApiResponse<T> {
 
     // 성공 응답
     public static <T> ApiResponse<T> success(T data) {
-        return new ApiResponse<>(ApiStatus.SUCCESS, data);
+        ApiResponse<T> response = new ApiResponse<>();
+        response.setCode(ApiStatus.SUCCESS.getCode());
+        response.setMessage(ApiStatus.SUCCESS.getMessage());
+        response.setData(data);
+        return response;
     }
 
     // 에러 응답 - 기본 메시지 사용
@@ -52,6 +62,14 @@ public class ApiResponse<T> {
 
     // 에러 응답 - 커스텀 메시지 사용
     public static <T> ApiResponse<T> error(ApiStatus status, String message) {
-        return new ApiResponse<>(status, message, null);
+        ApiResponse<T> response = new ApiResponse<>();
+        response.setCode(status.getCode());
+        response.setMessage(message);
+        return response;
+    }
+
+    // isSuccess 메서드 추가
+    public boolean isSuccess() {
+        return this.code == ApiStatus.SUCCESS.getCode();
     }
 }

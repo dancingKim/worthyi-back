@@ -5,7 +5,6 @@ import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,10 +37,4 @@ public class ChildActionInstance extends BaseEntity {
     @Builder.Default
     @OneToMany(mappedBy = "childActionInstance", cascade = CascadeType.ALL)
     private List<AdultActionInstance> adultActionInstances = new ArrayList<>();
-
-    @Column(name = "created_at", nullable = true, updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
 }

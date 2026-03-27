@@ -2,7 +2,6 @@ package com.worthyi.worthyi_backend.model.entity;
 
 import lombok.*;
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "item_instance")
@@ -38,12 +37,5 @@ public class ItemInstance extends BaseEntity {
 
     @Column(name = "is_equipped", nullable = false)
     private Boolean isEquipped;
-
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
     // Relationships
 }

@@ -56,10 +56,12 @@ public class TokenDto {
     @Builder
     public static class RefreshResponse {
         private String accessToken;
+        private String refreshToken;
 
-        public static RefreshResponse of(String accessToken) {
+        public static RefreshResponse of(String accessToken, String refreshToken) {
             return RefreshResponse.builder()
                     .accessToken(accessToken)
+                    .refreshToken(refreshToken)
                     .build();
         }
     }

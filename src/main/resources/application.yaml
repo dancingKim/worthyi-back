@@ -34,4 +34,11 @@ management:
   endpoints:
     web:
       exposure:
-        include: "*"
+        include: "health,info"
+
+app:
+  security:
+    oauth2:
+      allowed-redirect-origins: "http://localhost:3000,https://www.worthyilife.com,https://worthyilife.com"
+      allowed-redirect-schemes: "worthyi"
+      default-redirect-uri: "worthyi:/"

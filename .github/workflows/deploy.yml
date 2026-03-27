@@ -47,7 +47,7 @@ jobs:
         aws-region: ap-northeast-2
     
     - name: Upload to S3
-      run: aws s3 cp app.zip s3://worthyi-bucket/deploy/app.zip
+      run: aws s3 cp app.zip s3://worthyi-bucket-204098849975-ap-northeast-2-an/deploy/app.zip
 
   deploy:
     runs-on: ubuntu-latest
@@ -67,4 +67,4 @@ jobs:
           --application-name ${{ secrets.AWS_CODE_DEPLOY_APPLICATION }} \
           --deployment-group-name ${{ secrets.AWS_CODE_DEPLOY_GROUP }} \
           --deployment-config-name CodeDeployDefault.AllAtOnce \
-          --s3-location bucket=worthyi-bucket,bundleType=zip,key=deploy/app.zip
+          --s3-location bucket=worthyi-bucket-204098849975-ap-northeast-2-an,bundleType=zip,key=deploy/app.zip

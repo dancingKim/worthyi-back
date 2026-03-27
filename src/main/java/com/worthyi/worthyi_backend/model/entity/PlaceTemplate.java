@@ -2,7 +2,6 @@ package com.worthyi.worthyi_backend.model.entity;
 
 import lombok.*;
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
 import java.util.Set;
 
 @Entity
@@ -40,13 +39,6 @@ public class PlaceTemplate extends BaseEntity {
     @JoinColumn(name = "position_slot_id")
     @ToString.Exclude
     private PositionSlot positionSlot;
-
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
     // Relationships
 
     @OneToMany(mappedBy = "placeTemplate", cascade = CascadeType.ALL, orphanRemoval = true)
