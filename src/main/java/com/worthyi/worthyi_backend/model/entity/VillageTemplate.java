@@ -18,8 +18,8 @@ public class VillageTemplate extends BaseEntity {
     @Column(name = "template_id")
     private Long templateId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "creator_user_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name = "creator_user_id", nullable = true)
     @ToString.Exclude
     private User creatorUser;
 
