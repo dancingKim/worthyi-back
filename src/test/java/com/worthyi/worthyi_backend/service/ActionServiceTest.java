@@ -26,10 +26,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.temporal.TemporalAdjusters;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
@@ -122,6 +120,7 @@ public class ActionServiceTest {
         // 저장 결과 모킹
         ChildActionInstance savedInstance = new ChildActionInstance();
         savedInstance.setChildActionInstanceId(1L);
+        savedInstance.setData("{\"text\":\"saved\"}");
         when(childActionInstanceRepository.save(any(ChildActionInstance.class))).thenReturn(savedInstance);
 
         // Act
@@ -137,7 +136,6 @@ public class ActionServiceTest {
 
         // Arrange
         ActionDto.Request request = mock(ActionDto.Request.class);
-        when(request.toEntity(request)).thenReturn(new ChildActionInstance());
 
         PrincipalDetails principalDetails = mock(PrincipalDetails.class);
         when(principalDetails.getName()).thenReturn(dummyUserId);
@@ -149,7 +147,7 @@ public class ActionServiceTest {
 
         // Assert
         assertFalse(response.isSuccess(), "응답은 실패여야 합니다.");
-        assertEquals(ApiStatus.AVATAR_NOT_FOUND.getMessage(), response.getMessage());
+        assertEquals(ApiStatus.ACTION_SAVE_FAILED.getMessage(), response.getMessage());
     }
 
     @Test
@@ -168,7 +166,9 @@ public class ActionServiceTest {
         // ChildAction 조회 모킹
         ChildActionInstance childActionInstance = new ChildActionInstance();
         childActionInstance.setChildActionInstanceId(childActionId);
+        childActionInstance.setAvatarId(dummyAvatar.getAvatarId());
         when(childActionInstanceRepository.findById(childActionId)).thenReturn(Optional.of(childActionInstance));
+        when(avatarRepository.findByUserUserId(dummyUserUUID)).thenReturn(Optional.of(dummyAvatar));
 
         // AdultActionTemplate 조회 모킹
         when(adultActionTemplateRepository.findById(1L))
@@ -177,6 +177,8 @@ public class ActionServiceTest {
         // 저장 결과 모킹
         AdultActionInstance savedInstance = new AdultActionInstance();
         savedInstance.setAdultActionInstanceId(1L);
+        savedInstance.setChildActionInstance(childActionInstance);
+        savedInstance.setData("{\"text\":\"adult\"}");
         when(adultActionInstanceRepository.save(any(AdultActionInstance.class))).thenReturn(savedInstance);
 
         // Act
@@ -193,7 +195,6 @@ public class ActionServiceTest {
         // Arrange
         Long childActionId = 1L;
         AdultActionDto.Request request = mock(AdultActionDto.Request.class);
-        when(request.toEntity(request)).thenReturn(new AdultActionInstance());
 
         PrincipalDetails principalDetails = mock(PrincipalDetails.class);
         when(principalDetails.getName()).thenReturn(dummyUserId);
@@ -222,6 +223,7 @@ public class ActionServiceTest {
 
         ChildActionInstance instance = new ChildActionInstance();
         instance.setChildActionInstanceId(1L);
+        instance.setData("{\"text\":\"child\"}");
         when(childActionInstanceRepository.findAllByDateAndAvatarId(dummyAvatar.getAvatarId(), startOfDay, endOfDay))
                 .thenReturn(Collections.singletonList(instance));
 
@@ -248,6 +250,7 @@ public class ActionServiceTest {
         // getChildActionsByDate 메서드 호출 부분 모킹
         ChildActionInstance instance = new ChildActionInstance();
         instance.setChildActionInstanceId(1L);
+        instance.setData("{\"text\":\"child\"}");
         when(childActionInstanceRepository.findAllByDateAndAvatarId(anyLong(), any(LocalDateTime.class), any(LocalDateTime.class)))
                 .thenReturn(Collections.singletonList(instance));
 

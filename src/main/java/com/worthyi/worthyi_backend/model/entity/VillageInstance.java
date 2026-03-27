@@ -2,7 +2,6 @@ package com.worthyi.worthyi_backend.model.entity;
 
 import lombok.*;
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
 import java.util.Set;
 
 @Entity
@@ -34,13 +33,6 @@ public class VillageInstance extends BaseEntity {
 
     @Column(name = "description")
     private String description;
-
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
     // Relationships
 
     @OneToMany(mappedBy = "villageInstance", cascade = CascadeType.ALL, orphanRemoval = true)

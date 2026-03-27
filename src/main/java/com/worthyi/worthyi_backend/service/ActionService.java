@@ -93,18 +93,31 @@ public class ActionService {
             
             // 1. ChildAction 존재 여부 확인
             ChildActionInstance childActionInstance = childActionInstanceRepository.findById(childActionId)
-                    .orElseThrow(() -> {
-                        log.error("Child action not found with id: {}", childActionId);
-                        return new RuntimeException(ApiStatus.CHILD_ACTION_NOT_FOUND.getMessage());
-                    });
+                    .orElse(null);
+            if (childActionInstance == null) {
+                log.error("Child action not found with id: {}", childActionId);
+                return ApiResponse.error(ApiStatus.CHILD_ACTION_NOT_FOUND);
+            }
             log.debug("Found child action: {}", childActionInstance);
+
+            Avatar avatar = avatarRepository.findByUserUserId(UUID.fromString(userId))
+                    .orElse(null);
+            if (avatar == null) {
+                log.error("Avatar not found for userId: {}", userId);
+                return ApiResponse.error(ApiStatus.AVATAR_NOT_FOUND);
+            }
+            if (!avatar.getAvatarId().equals(childActionInstance.getAvatarId())) {
+                log.warn("User {} attempted to write adult action on childActionId {}", userId, childActionId);
+                return ApiResponse.error(ApiStatus.FORBIDDEN);
+            }
 
             // 2. AdultActionTemplate 조회
             AdultActionTemplate adultActionTemplate = adultActionTemplateRepository.findById(1L)
-                    .orElseThrow(() -> {
-                        log.error("Adult action template not found with id: 1");
-                        return new RuntimeException(ApiStatus.ACTION_TEMPLATE_NOT_FOUND.getMessage());
-                    });
+                    .orElse(null);
+            if (adultActionTemplate == null) {
+                log.error("Adult action template not found with id: 1");
+                return ApiResponse.error(ApiStatus.ACTION_TEMPLATE_NOT_FOUND);
+            }
             log.debug("Found adult action template: {}", adultActionTemplate);
 
             // 3. AdultActionInstance 생성 및 연관관계 설정
@@ -182,17 +195,17 @@ public class ActionService {
         int weeklyCount = childActionInstanceRepository.countDistinctDatesByAvatarIdAndDateBetween(
                 avatar.getAvatarId(), 
                 weekStart.atStartOfDay(),  // LocalDate -> LocalDateTime
-                weekEnd.atStartOfDay()
+                weekEnd.plusDays(1).atStartOfDay()
         );
         int monthlyCount = childActionInstanceRepository.countDistinctDatesByAvatarIdAndDateBetween(
                 avatar.getAvatarId(), 
                 monthStart.atStartOfDay(), 
-                monthEnd.atStartOfDay()
+                monthEnd.plusDays(1).atStartOfDay()
         );
         int yearlyCount = childActionInstanceRepository.countDistinctDatesByAvatarIdAndDateBetween(
                 avatar.getAvatarId(), 
                 yearStart.atStartOfDay(), 
-                yearEnd.atStartOfDay()
+                yearEnd.plusDays(1).atStartOfDay()
         );
 
         return ActionDto.ActionLogResponse.builder()
@@ -208,11 +221,17 @@ public class ActionService {
         try {
             // 1. Avatar 조회
             Avatar avatar = avatarRepository.findByUserUserId(UUID.fromString(userId))
-                    .orElseThrow(() -> new RuntimeException(ApiStatus.AVATAR_NOT_FOUND.getMessage()));
+                    .orElse(null);
+            if (avatar == null) {
+                return ApiResponse.error(ApiStatus.AVATAR_NOT_FOUND);
+            }
 
             // 2. ChildAction 조회 및 권한 확인
             ChildActionInstance childAction = childActionInstanceRepository.findById(childActionId)
-                    .orElseThrow(() -> new RuntimeException(ApiStatus.CHILD_ACTION_NOT_FOUND.getMessage()));
+                    .orElse(null);
+            if (childAction == null) {
+                return ApiResponse.error(ApiStatus.CHILD_ACTION_NOT_FOUND);
+            }
 
             if (!childAction.getAvatarId().equals(avatar.getAvatarId())) {
                 return ApiResponse.error(ApiStatus.NOT_AUTHORIZED_TO_DELETE);

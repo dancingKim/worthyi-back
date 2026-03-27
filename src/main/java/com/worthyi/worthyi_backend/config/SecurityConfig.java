@@ -5,6 +5,7 @@ import com.worthyi.worthyi_backend.security.CustomRequestEntityConverter;
 import com.worthyi.worthyi_backend.security.JwtAuthenticationFilter;
 import com.worthyi.worthyi_backend.security.JwtTokenProvider;
 import com.worthyi.worthyi_backend.security.OAuth2AuthenticationSuccessHandler;
+import com.worthyi.worthyi_backend.security.OAuth2RedirectValidator;
 import com.worthyi.worthyi_backend.security.RedirectUrlCookieFilter;
 import com.worthyi.worthyi_backend.security.OAuth2AuthenticationFailureHandler;
 import com.worthyi.worthyi_backend.security.CustomAccessDeniedHandler;
@@ -60,6 +61,10 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
+                                "/actuator/health",
+                                "/actuator/health/**"
+                        ).permitAll()
+                        .requestMatchers(
                                 "/oauth2/authorization/**",
                                 "/login/oauth2/code/**",
                                 "/auth/authorize/**",
@@ -68,9 +73,7 @@ public class SecurityConfig {
                                 "/",
                                 "/login",
                                 "/auth/**",
-                                "/auth/token/refresh",
                                 "/oauth2/**",
-                                "/actuator/**",
                                 "/css/**",
                                 "/js/**",
                                 "/images/**"
@@ -128,8 +131,9 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler(JwtTokenProvider jwtTokenProvider,
-                                                                           StringRedisTemplate redisTemplate) {
-        return new OAuth2AuthenticationSuccessHandler(jwtTokenProvider, redisTemplate);
+                                                                           StringRedisTemplate redisTemplate,
+                                                                           OAuth2RedirectValidator redirectValidator) {
+        return new OAuth2AuthenticationSuccessHandler(jwtTokenProvider, redisTemplate, redirectValidator);
     }
 
     @Bean
@@ -153,7 +157,6 @@ public class SecurityConfig {
                 "http://10.0.2.2:8081",
                 "https://appleid.apple.com"
         ));
-        configuration.addAllowedOriginPattern("*");
 
         configuration.addAllowedMethod("*");
         configuration.addAllowedHeader("*");

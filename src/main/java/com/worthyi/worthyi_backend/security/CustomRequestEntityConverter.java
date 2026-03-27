@@ -43,21 +43,12 @@ public class CustomRequestEntityConverter implements Converter<OAuth2Authorizati
 
     public CustomRequestEntityConverter() {
         this.defaultConverter = new OAuth2AuthorizationCodeGrantRequestEntityConverter();
-        log.debug("CustomRequestEntityConverter initialized with: keyId={}, teamId={}, clientId={}, url={}", keyId,
-                teamId, clientId, url);
     }
 
     @Override
     public RequestEntity<?> convert(OAuth2AuthorizationCodeGrantRequest req) {
-        log.debug("=== CustomRequestEntityConverter convert method called ===");
-        log.debug("Converting OAuth2AuthorizationCodeGrantRequest for registrationId: {}",
+        log.debug("Converting OAuth2AuthorizationCodeGrantRequest for registrationId={}",
                 req.getClientRegistration().getRegistrationId());
-        // Authorization Code와 State 정보 로그 추가
-        String authorizationCode = req.getAuthorizationExchange().getAuthorizationResponse().getCode();
-        String state = req.getAuthorizationExchange().getAuthorizationResponse().getState();
-
-        log.debug("Authorization Code: {}", authorizationCode);
-        log.debug("State: {}", state);
         RequestEntity<?> entity = defaultConverter.convert(req);
         String registrationId = req.getClientRegistration().getRegistrationId();
 
@@ -82,8 +73,6 @@ public class CustomRequestEntityConverter implements Converter<OAuth2Authorizati
     }
 
     public PrivateKey getPrivateKey() throws IOException {
-        log.debug("=== CustomRequestEntityConverter getPrivateKey method called ===");
-        log.debug("Getting private key for Apple OAuth2");
         try {
             // PEM 헤더와 푸터 제거
             String privateKeyPEM = privateKeyContent
@@ -97,9 +86,7 @@ public class CustomRequestEntityConverter implements Converter<OAuth2Authorizati
             // PrivateKey 객체 생성
             PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(encoded);
             KeyFactory keyFactory = KeyFactory.getInstance("EC");
-            PrivateKey privateKey = keyFactory.generatePrivate(keySpec);
-            log.debug("Private key obtained successfully");
-            return privateKey;
+            return keyFactory.generatePrivate(keySpec);
         } catch (Exception e) {
             log.error("Error obtaining private key: {}", e.getMessage());
             throw new IOException("Failed to obtain private key", e);
@@ -107,12 +94,9 @@ public class CustomRequestEntityConverter implements Converter<OAuth2Authorizati
     }
 
     public String createClientSecret() throws IOException {
-        log.debug("=== CustomRequestEntityConverter createClientSecret method called ===");
-        log.debug("Creating JWT for client secret");
         Map<String, Object> jwtHeader = new HashMap<>();
         jwtHeader.put("kid", keyId);
         jwtHeader.put("alg", "ES256");
-        log.debug("JWT Header: {}", jwtHeader);
         String jwt = Jwts.builder()
                 .setHeaderParams(jwtHeader)
                 .setIssuer(teamId)
@@ -123,9 +107,7 @@ public class CustomRequestEntityConverter implements Converter<OAuth2Authorizati
                 .signWith(getPrivateKey(), SignatureAlgorithm.ES256)
                 .compact();
 
-        log.debug("Payload: iss={}, iat={}, exp={}, aud={}, sub={}", teamId, new Date(),
-                new Date(System.currentTimeMillis() + (1000 * 60 * 5)), url, clientId);
-        log.debug("JWT created successfully: {}", jwt);
+        log.debug("Apple client secret generated.");
         return jwt;
     }
 }

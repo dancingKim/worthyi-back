@@ -128,7 +128,6 @@ public class JwtTokenProvider {
                 .compact();
 
         log.info("Token created successfully");
-        log.debug("Token: {}", token);
         return token;
     }
 

@@ -17,7 +17,6 @@ import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
 import java.util.*;
 
 @Slf4j
@@ -95,16 +94,12 @@ public class CustomOidcUserService extends OidcUserService {
                     .villageTemplate(villageTemplateRepository.findById(1L).orElseThrow())
                     .name(savedUser.getUserId() + "의 마을")
                     .description("새로 만들어진 마을입니다.")
-                    .createdAt(LocalDateTime.now())
-                    .updatedAt(LocalDateTime.now())
                     .build();
             villageInstanceRepository.save(villageInstance);
 
             Avatar avatar = Avatar.builder()
                     .user(savedUser)
                     .name(savedUser.getSub() + "의 아바타")
-                    .createdAt(LocalDateTime.now())
-                    .updatedAt(LocalDateTime.now())
                     .build();
             avatarRepository.save(avatar);
 

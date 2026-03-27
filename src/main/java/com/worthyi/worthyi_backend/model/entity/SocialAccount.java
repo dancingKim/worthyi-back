@@ -2,7 +2,6 @@ package com.worthyi.worthyi_backend.model.entity;
 
 import lombok.*;
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "social_account",
@@ -29,10 +28,4 @@ public class SocialAccount extends BaseEntity {
 
     @Column(name = "provider_user_id", nullable = false, length = 255)
     private String providerUserId;
-
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
 }

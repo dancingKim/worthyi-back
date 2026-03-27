@@ -3,9 +3,7 @@ package com.worthyi.worthyi_backend.controller;
 import com.worthyi.worthyi_backend.common.ApiStatus;
 import com.worthyi.worthyi_backend.model.dto.ApiResponse;
 import com.worthyi.worthyi_backend.service.AuthService;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,8 +13,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.worthyi.worthyi_backend.model.dto.TokenDto;
 import com.worthyi.worthyi_backend.exception.CustomException;
-import java.util.Arrays;
-import java.util.Optional;
 
 @Slf4j
 @RestController
@@ -36,7 +32,6 @@ public class AuthController {
         }
 
         String accessToken = authHeader.replace("Bearer ", "");
-        log.debug("추출된 액세스 토큰: {}", accessToken);
         
         authService.validateAccessToken(accessToken);
 
@@ -58,7 +53,7 @@ public class AuthController {
     }
 
     @PostMapping("/token/refresh")
-    public ApiResponse<?> refreshTokens(@RequestBody TokenDto.RefreshRequest request, HttpServletResponse response) {
+    public ApiResponse<?> refreshTokens(@RequestBody TokenDto.RefreshRequest request) {
 
         log.info("토큰 갱신 요청 시작");
 
@@ -72,13 +67,11 @@ public class AuthController {
             return ApiResponse.error(ApiStatus.MISSING_REFRESH_TOKEN, "Refresh token is missing in cookies");
         }
 
-        log.debug("Refresh 토큰: {}", refreshToken);
-
         authService.validateRefreshToken(refreshToken);
 
         try {
             log.info("토큰 갱신 처리 시작");
-            TokenDto.RefreshResponse tokens = authService.refreshTokens(refreshToken, response);
+            TokenDto.RefreshResponse tokens = authService.refreshTokens(refreshToken);
             log.info("토큰 갱신 성공");
             return ApiResponse.success(tokens);
         } catch (CustomException e) {

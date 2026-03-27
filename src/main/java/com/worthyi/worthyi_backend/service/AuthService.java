@@ -1,7 +1,6 @@
 package com.worthyi.worthyi_backend.service;
 
 import com.worthyi.worthyi_backend.security.JwtTokenProvider;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -72,7 +71,7 @@ public class AuthService {
         }
     }
 
-    public TokenDto.RefreshResponse refreshTokens(String refreshToken, HttpServletResponse response) {
+    public TokenDto.RefreshResponse refreshTokens(String refreshToken) {
         try {
             String userId = jwtTokenProvider.getUserIdFromToken(refreshToken);
             String redisRefreshToken = redisTemplate.opsForValue().get("refresh:" + userId);
@@ -82,10 +81,15 @@ public class AuthService {
             if (redisRefreshToken != null && redisRefreshToken.equals(refreshToken)) {
                 List<GrantedAuthority> authorities = userService.getUserAuthoritiesByUserId(userId);
                 String newAccessToken = jwtTokenProvider.createToken(authentication, authorities);
+                String newRefreshToken = jwtTokenProvider.createRefreshToken(authentication);
+                redisTemplate.opsForValue().set(
+                        "refresh:" + userId,
+                        newRefreshToken,
+                        jwtTokenProvider.getRefreshTokenValidTime(),
+                        TimeUnit.MILLISECONDS
+                );
 
-                // 새로운 Refresh Token을 Redis에 저장
-
-                TokenDto.RefreshResponse tokens = TokenDto.RefreshResponse.of(newAccessToken);
+                TokenDto.RefreshResponse tokens = TokenDto.RefreshResponse.of(newAccessToken, newRefreshToken);
 
                 return tokens;
             }

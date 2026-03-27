@@ -42,7 +42,7 @@ public class ActionController {
                     .findFirst());
 
         if (refreshTokenCookie.isPresent()) {
-            log.info("Refresh token found in cookies: {}", refreshTokenCookie.get().getValue());
+            log.info("Refresh token found in cookies");
         } else {
             log.info("No refresh token found in cookies");
         }
@@ -107,10 +107,10 @@ public class ActionController {
         log.info("=== Delete Child Action Start ===");
         log.debug("User: id={}, providerUserId={}", principal.getName(), principal.getUsername());
 
-        actionService.deleteChildAction(id, principal.getName());
+        ApiResponse<Void> response = actionService.deleteChildAction(id, principal.getName());
 
-        log.info("=== Delete Child Action End === Successfully deleted");
-        return ApiResponse.success(null);
+        log.info("=== Delete Child Action End === Status: {}", response.getCode());
+        return response;
     }
 
     @DeleteMapping("/{childActionId}/adult/{adultActionId}")

@@ -8,6 +8,8 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -21,33 +23,27 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
 
     private final JwtTokenProvider jwtTokenProvider;
     private final StringRedisTemplate redisTemplate;
+    private final OAuth2RedirectValidator redirectValidator;
     private static final String LOCAL_REDIRECT_URL = "worthyi:/";
     private static final long AUTH_CODE_TTL = 5*60;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public OAuth2AuthenticationSuccessHandler(JwtTokenProvider jwtTokenProvider, StringRedisTemplate redisTemplate) {
+    public OAuth2AuthenticationSuccessHandler(
+            JwtTokenProvider jwtTokenProvider,
+            StringRedisTemplate redisTemplate,
+            OAuth2RedirectValidator redirectValidator
+    ) {
         this.jwtTokenProvider = jwtTokenProvider;
         this.redisTemplate = redisTemplate;
+        this.redirectValidator = redirectValidator;
     }
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException {
-        log.info("=== OAuth2 Authentication Success Handler Start ===");
-        log.info("requestURI: {}", request.getRequestURI());
-        log.info("requestURL: {}", request.getRequestURL());
-        log.info("request protocol: {}", request.getProtocol());
-        log.info("request remoteAddr: {}", request.getRemoteAddr());
-        log.info("request remoteHost: {}", request.getRemoteHost());
-        log.info("request remotePort: {}", request.getRemotePort());
-        log.info("request remoteUser: {}", request.getRemoteUser());
-        log.info("request remotePort: {}", request.getRemotePort());
-
         PrincipalDetails principalDetails = (PrincipalDetails) authentication.getPrincipal();
         Map<String, Object> attributes = principalDetails.getAttributes();
 
-        // JWT 토큰 생성
-        log.debug("Creating JWT token for authenticated user: {}", authentication.getName());
         attributes.remove("nonce");
         attributes.remove("at_hash");
         attributes.remove("aud");
@@ -59,27 +55,36 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
         attributes.remove("exp");
         attributes.remove("nonce");
 
-
         String attributesJson =  objectMapper.writeValueAsString(attributes);
-
-
         String authCode = UUID.randomUUID().toString().replace("-", "");
         redisTemplate.opsForValue().set("authCode:" + authCode, attributesJson, AUTH_CODE_TTL, TimeUnit.SECONDS);
 
-
-
-        // Redirect URI 쿠키 검색
         Optional<Cookie> oCookie = Optional.ofNullable(request.getCookies())
                 .flatMap(cookies -> Arrays.stream(cookies)
                         .filter(cookie -> cookie.getName().equals(REDIRECT_URI_PARAM))
                         .findFirst());
-        log.debug("Redirect URI cookie found: {}", oCookie.isPresent());
 
-        String redirectUri = oCookie.map(Cookie::getValue).orElseGet(() -> LOCAL_REDIRECT_URL);
-        log.info("Redirecting to: {}", redirectUri);
+        String decodedRedirectUri = oCookie
+                .map(Cookie::getValue)
+                .map(this::decodeCookieValue)
+                .orElse(LOCAL_REDIRECT_URL);
+        String redirectUri = redirectValidator.resolveRedirectUriOrDefault(decodedRedirectUri);
+        if (!redirectValidator.isAllowed(decodedRedirectUri)) {
+            log.warn("Blocked untrusted redirect URI from cookie: {}", decodedRedirectUri);
+        }
 
-        // 클라이언트로 리디렉션
-        response.sendRedirect(redirectUri + "/sociallogin?code=" + authCode);
-        log.info("=== OAuth2 Authentication Success Handler End ===");
+        String normalizedRedirectUri = redirectUri.endsWith("/")
+                ? redirectUri.substring(0, redirectUri.length() - 1)
+                : redirectUri;
+        response.sendRedirect(normalizedRedirectUri + "/sociallogin?code=" + authCode);
+    }
+
+    private String decodeCookieValue(String value) {
+        try {
+            return URLDecoder.decode(value, StandardCharsets.UTF_8);
+        } catch (IllegalArgumentException e) {
+            log.warn("Failed to decode redirect cookie value.");
+            return LOCAL_REDIRECT_URL;
+        }
     }
 }
