@@ -151,7 +151,7 @@ public class AvatarImageGenerationService {
                 Apply only the requested change unless a tiny adjustment is necessary to keep the result coherent.
                 Return exactly one character.
                 No text, no speech bubble, no frame, no extra objects, no background scene.
-                The background must be fully transparent.
+                The background must be a flat pure white background with no gradient, texture, pattern, props, or shadow.
                 User request: %s
                 """.formatted(prompt);
     }
