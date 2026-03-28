@@ -39,6 +39,7 @@ dependencies {
     implementation platform("io.awspring.cloud:spring-cloud-aws-dependencies:${springCloudAwsVersion}")
     implementation 'io.awspring.cloud:spring-cloud-aws-starter'
     implementation 'io.awspring.cloud:spring-cloud-aws-starter-secrets-manager'
+    implementation 'software.amazon.awssdk:s3'
 
     // PostgreSQL
     implementation 'org.postgresql:postgresql:42.7.4'

@@ -35,6 +35,8 @@ public enum ApiStatus {
 
     // 추가할 상태 코드들
     AVATAR_NOT_FOUND(404, "Avatar not found", 404),
+    AVATAR_IMAGE_NOT_FOUND(404, "Avatar image not found", 404),
+    AVATAR_IMAGE_GENERATION_FAILED(500, "Failed to generate avatar image", 500),
     VILLAGE_NOT_FOUND(404, "Village not found", 404),
     PLACE_NOT_FOUND(404, "Place not found", 404),
     ACTION_TEMPLATE_NOT_FOUND(404, "Action template not found", 404),

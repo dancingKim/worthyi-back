@@ -42,3 +42,15 @@ app:
       allowed-redirect-origins: "http://localhost:3000,https://www.worthyilife.com,https://worthyilife.com"
       allowed-redirect-schemes: "worthyi"
       default-redirect-uri: "worthyi:/"
+  avatar:
+    google-ai-api-key: ${GOOGLE_AI_WORTHYI_KEY:}
+    google-ai-default-model-preset: ${AVATAR_GOOGLE_AI_DEFAULT_MODEL_PRESET:BEST}
+    google-ai-best-model: ${AVATAR_GOOGLE_AI_MODEL_BEST:gemini-3-pro-image-preview}
+    google-ai-balanced-model: ${AVATAR_GOOGLE_AI_MODEL_BALANCED:gemini-3.1-flash-image-preview}
+    google-ai-fast-model: ${AVATAR_GOOGLE_AI_MODEL_FAST:gemini-2.5-flash-image}
+    google-ai-endpoint: ${AVATAR_GOOGLE_AI_ENDPOINT:https://generativelanguage.googleapis.com/v1beta/models}
+    s3-bucket: ${AVATAR_IMAGE_BUCKET:worthyi-bucket-204098849975-ap-northeast-2-an}
+    s3-prefix: ${AVATAR_IMAGE_PREFIX:avatars/users}
+    default-reference-path: ${AVATAR_DEFAULT_REFERENCE_PATH:classpath:avatar/default-avatar-reference.png}
+    signed-url-minutes: ${AVATAR_SIGNED_URL_MINUTES:30}
+    max-prompt-length: ${AVATAR_MAX_PROMPT_LENGTH:400}

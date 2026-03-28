@@ -42,6 +42,15 @@ public class User extends BaseEntity {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Avatar> avatars;
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    private List<AvatarImage> avatarImages;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "active_avatar_image_id")
+    @ToString.Exclude
+    private AvatarImage activeAvatarImage;
+
     // 마을 템플릿 (User -> VillageTemplate)
     @OneToMany(mappedBy = "creatorUser", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<VillageTemplate> villageTemplates;

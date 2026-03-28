@@ -7,6 +7,7 @@ import com.worthyi.worthyi_backend.model.entity.UserRole;
 import com.worthyi.worthyi_backend.repository.UserRepository;
 import com.worthyi.worthyi_backend.repository.UserRoleRepository;
 import com.worthyi.worthyi_backend.repository.AvatarRepository;
+import com.worthyi.worthyi_backend.repository.AvatarImageRepository;
 import com.worthyi.worthyi_backend.repository.VillageInstanceRepository;    
 import com.worthyi.worthyi_backend.repository.SocialAccountRepository;
 import com.worthyi.worthyi_backend.repository.AvatarInVillageRepository;
@@ -33,11 +34,13 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserRoleRepository userRoleRepository;
     private final AvatarRepository avatarRepository;
+    private final AvatarImageRepository avatarImageRepository;
     private final VillageInstanceRepository villageInstanceRepository;
     private final SocialAccountRepository socialAccountRepository;
     private final AvatarInVillageRepository avatarInVillageRepository;
     private final AdultActionInstanceRepository adultActionInstanceRepository;
     private final ChildActionInstanceRepository childActionInstanceRepository;
+    private final AvatarImageStorageService avatarImageStorageService;
 
     /**
      * userId(실제로는 UUID)로 사용자의 권한 정보를 조회
@@ -63,13 +66,17 @@ public class UserService {
     public UserDto.Response getUserInfo(String userId) {
         log.info("getUserInfo - Attempting to fetch user information for userId: {}", userId);
         
-        User user = userRepository.findByUserIdWithAvatars(UUID.fromString(userId))
+        User user = userRepository.findByUserIdWithAvatarsAndActiveAvatarImage(UUID.fromString(userId))
                 .orElseThrow(() -> {
                     log.error("getUserInfo - User not found for userId: {}", userId);
                     return new IllegalArgumentException(ApiStatus.USER_NOT_FOUND.getMessage());
                 });
-        
-        UserDto.Response response = UserDto.Response.from(user);
+
+        String activeAvatarImageUrl = user.getActiveAvatarImage() == null
+                ? null
+                : avatarImageStorageService.createReadUrl(user.getActiveAvatarImage().getImageKey());
+
+        UserDto.Response response = UserDto.Response.from(user, activeAvatarImageUrl);
         log.info("getUserInfo - Successfully created response DTO for user: {}", response);
         
         return response;
@@ -96,7 +103,17 @@ public class UserService {
         log.info("아바타-마을 연결 정보 삭제 완료");
         }
 
-     
+        User user = userRepository.findById(userId).orElse(null);
+        if (user != null && user.getActiveAvatarImage() != null) {
+            user.setActiveAvatarImage(null);
+            userRepository.save(user);
+            userRepository.flush();
+        }
+
+        avatarImageRepository.findAllByUser_UserIdOrderByCreatedAtDesc(userId)
+                .forEach(avatarImage -> avatarImageStorageService.deleteQuietly(avatarImage.getImageKey()));
+        avatarImageRepository.deleteByUser_UserId(userId);
+        log.info("사용자의 커스텀 아바타 이미지 삭제 완료");
 
         // 5. VillageInstance 삭제
         villageInstanceRepository.deleteByUser_UserId(userId);

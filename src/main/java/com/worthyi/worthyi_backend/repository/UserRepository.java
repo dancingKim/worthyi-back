@@ -15,6 +15,9 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     Optional<User> findByUserId(UUID userId);
 
-    @Query("SELECT u FROM User u LEFT JOIN FETCH u.avatars WHERE u.userId = :userId")
-    Optional<User> findByUserIdWithAvatars(@Param("userId") UUID userId);
+    @Query("SELECT u FROM User u LEFT JOIN FETCH u.activeAvatarImage WHERE u.userId = :userId")
+    Optional<User> findByUserIdWithActiveAvatarImage(@Param("userId") UUID userId);
+
+    @Query("SELECT u FROM User u LEFT JOIN FETCH u.avatars LEFT JOIN FETCH u.activeAvatarImage WHERE u.userId = :userId")
+    Optional<User> findByUserIdWithAvatarsAndActiveAvatarImage(@Param("userId") UUID userId);
 }
