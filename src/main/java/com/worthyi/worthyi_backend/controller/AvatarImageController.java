@@ -9,9 +9,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,27 +19,27 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/avatar-images")
+@RequestMapping("/user/me")
 public class AvatarImageController {
 
     private final AvatarImageService avatarImageService;
 
-    @GetMapping
+    @GetMapping("/avatar-images")
     public ApiResponse<AvatarImageDto.CollectionResponse> getAvatarImages(
             @AuthenticationPrincipal PrincipalDetails principal
     ) {
         return ApiResponse.success(avatarImageService.getAvatarImages(principal.getName()));
     }
 
-    @PostMapping("/generate")
-    public ApiResponse<AvatarImageDto.CollectionResponse> generateAvatarImage(
+    @PostMapping("/avatar-images")
+    public ApiResponse<AvatarImageDto.CollectionResponse> createAvatarImage(
             @AuthenticationPrincipal PrincipalDetails principal,
             @RequestBody AvatarImageDto.GenerateRequest request
     ) {
-        return ApiResponse.success(avatarImageService.generateAvatarImage(principal.getName(), request));
+        return ApiResponse.success(avatarImageService.createAvatarImage(principal.getName(), request));
     }
 
-    @PatchMapping("/active")
+    @PutMapping("/avatar-image")
     public ApiResponse<AvatarImageDto.CollectionResponse> setActiveAvatarImage(
             @AuthenticationPrincipal PrincipalDetails principal,
             @RequestBody AvatarImageDto.SetActiveRequest request
@@ -47,7 +47,7 @@ public class AvatarImageController {
         return ApiResponse.success(avatarImageService.setActiveAvatarImage(principal.getName(), request));
     }
 
-    @DeleteMapping("/{avatarImageId}")
+    @DeleteMapping("/avatar-images/{avatarImageId}")
     public ApiResponse<AvatarImageDto.CollectionResponse> deleteAvatarImage(
             @AuthenticationPrincipal PrincipalDetails principal,
             @PathVariable Long avatarImageId

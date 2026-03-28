@@ -40,7 +40,7 @@ public class AvatarImageService {
     }
 
     @Transactional
-    public AvatarImageDto.CollectionResponse generateAvatarImage(String userId, AvatarImageDto.GenerateRequest request) {
+    public AvatarImageDto.CollectionResponse createAvatarImage(String userId, AvatarImageDto.GenerateRequest request) {
         UUID parsedUserId = UUID.fromString(userId);
         User user = getUserWithActiveAvatarImage(parsedUserId);
         AvatarImage referenceAvatarImage = request.getReferenceAvatarImageId() == null
