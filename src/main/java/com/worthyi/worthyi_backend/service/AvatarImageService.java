@@ -158,10 +158,8 @@ public class AvatarImageService {
     }
 
     private String createAvatarName(String prompt) {
-        String normalizedPrompt = normalizePrompt(prompt);
-        return normalizedPrompt.length() > 24
-                ? normalizedPrompt.substring(0, 24).trim() + "..."
-                : normalizedPrompt;
+        normalizePrompt(prompt);
+        return "생성 캐릭터";
     }
 
     private String normalizePrompt(String prompt) {
